@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 def read_tfrecord(example):
     BAND_STATS = {
         'mean': {

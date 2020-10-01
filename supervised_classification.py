@@ -99,14 +99,14 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         class_weight = None
         print("Not Using Weights")
 
-    training_filenames = f'{tfr_path}/balanced_train_0.tfrecord'
-    validation_filenames = f'{tfr_path}/val-part-0.tfrecord'
+    training_filenames = f'{TFR_PATH}/balanced_train_0.tfrecord'
+    validation_filenames = f'{TFR_PATH}/val-part-0.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
-    len_val_records = 8768
-    len_train_records = 42240
+    len_val_records = 4384 
+    len_train_records = 9942
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE
 
@@ -140,9 +140,11 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
 
     return df
 
-if __name__ == 'main':
+if __name__ == '__main__':
+    
+    print('In main function')
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
-    parser.add_argument('-a', '--arch', options=[ResNet50, ResNet101V2, Xception, InceptionV3],
+    parser.add_argument('-a', '--arch', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
     parser.add_argument('-o', '--output', type=str,
                         help='Output File Prefix for model file and dataframe')
@@ -154,18 +156,15 @@ if __name__ == 'main':
                        help="whether to use weights")
     args = parser.parse_args()
 
-    if args.weights:
-        run_model(args.output,
-                  BATCH_SIZE=args.BATCH_SIZE,
-                  epochs=args.EPOCHS,
-                  weights=True,
-                  architecture=args.arch,
-                  pretrain=False)
-    else:
-        run_model(args.output,
+    arch_dict = {'ResNet50': ResNet50,
+                 'ResNet101V2':ResNet101V2,
+                 'Xception':Xception,
+                 'InceptionV3':InceptionV3}
+    
+    run_model(args.output,
                   BATCH_SIZE=args.BATCH_SIZE,
                   epochs=args.EPOCHS,
                   weights=False,
-                  architecture=args.arch,
+                  architecture=arch_dict[args.arch],
                   pretrain=False)
 
