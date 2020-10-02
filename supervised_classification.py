@@ -114,7 +114,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_precision',
         verbose=1,
-        patience=15,
+        patience=25,
         mode='max',
         restore_best_weights=True)
 
@@ -133,10 +133,10 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
                         class_weight=class_weight)
     times = time_callback.times
 
-    model.save(f'{output_path}/{name}.h5')
+    model.save(f'{OUTPUT_PATH}/{name}.h5')
     df = pd.DataFrame(history.history)
     df['times'] = time_callback.times
-    df.to_pickle(f'{output_path}/{name}.pkl')
+    df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
 
     return df
 
