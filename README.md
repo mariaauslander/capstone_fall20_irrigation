@@ -16,11 +16,8 @@ Follow the steps below for setting up the appropriate environment for model trai
 6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:
 ```docker run -it --rm -v /root/capstone_fall20_irrigation:/capstone_fall20_irrigation -v /mnt/irrigation.data:/data irgapp bash```
 7. The above command will place you withini the docker container. Train the model using the following: 
-```python3 supervised_classification.py \
-           -a ARCH \
-           -o OUTPUT \
-           -e EPOCHS \
-           -b BATCH```
+```python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH```
+           
            where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
                  OUTPUT is a prefix for model file and results file
                  EPOCHS is number of epochs to run (50 is default)
