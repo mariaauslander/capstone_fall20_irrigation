@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt install software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt update
-RUN apt install vim
+RUN apt install -y vim
 RUN apt install python3.7
 
 RUN alias python='python3.7'
