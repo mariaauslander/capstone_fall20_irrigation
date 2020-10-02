@@ -22,7 +22,5 @@ RUN pip install rasterio
 RUN pip install matplotlib
 RUN pip install tqdm
 
-
-WORKDIR /capstone_fall20_irrigation
-
+RUN sh prep_workspace.sh
 
