@@ -12,13 +12,12 @@ Follow the steps below for setting up the appropriate environment for model trai
 3. Clone this GitHub repo
 4. Run `sh ./setup/prep_workspace.sh` - this will create a directory structure expected by the model
 5. Copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
-5. Build the docker image using the command `docker build -t irgapp -f ./setup/tf23.docker .`
-6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:
-```docker run -it --rm -v /root/capstone_fall20_irrigation:/capstone_fall20_irrigation -v /mnt/irrigation.data:/data irgapp bash```
-7. The above command will place you withini the docker container. Train the model using the following: 
-```python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH```
-           
-           where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
+5. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
+6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:  
+`docker run -it --rm -v /root/capstone_fall20_irrigation:/capstone_fall20_irrigation -v /mnt/irrigation.data:/data irgapp bash`
+7. The above command will place you withini the docker container. Train the model using the following:  
+`python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH`
+ where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
                  OUTPUT is a prefix for model file and results file
                  EPOCHS is number of epochs to run (50 is default)
                  BATCH is batch size (default is 32)
