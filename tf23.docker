@@ -10,17 +10,18 @@ RUN apt install software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt update
 RUN apt install -y vim
-RUN apt install python3.7
+RUN apt install -y python3.7
 
 RUN alias python='python3.7'
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python get-pip.py
 RUN pip install pandas
-RUN pip install tensorflow
 RUN pip install rasterio
 RUN pip install matplotlib
 RUN pip install tqdm
+
+ADD prep_workspace.sh /
 
 RUN sh prep_workspace.sh
 
