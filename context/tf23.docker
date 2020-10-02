@@ -21,7 +21,4 @@ RUN pip install rasterio
 RUN pip install matplotlib
 RUN pip install tqdm
 
-ADD prep_workspace.sh /
-
-RUN sh prep_workspace.sh
 
