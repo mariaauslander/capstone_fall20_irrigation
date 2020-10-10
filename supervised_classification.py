@@ -5,7 +5,7 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
-import seaborn as sns
+#import seaborn as sns
 #from matplotlib.cm import get_cmap
 import csv
 import json
@@ -18,7 +18,7 @@ import argparse
 import cv2
 
 print(f'Using TensorFlow Version: {tf.__version__}')
-sns.set()
+#sns.set()
 
 # Set Paths
 BASE_PATH = './BigEarthData'
@@ -141,9 +141,9 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
                   height_shift_range=0.2,
                   horizontal_flip=True,
                   vertical_flip=True,
-                  channel_shift_range=0.1,
-                  zoom_range=0.25,
-                  preprocessing_function= blur)
+                 # channel_shift_range=0.1,
+                  zoom_range=0.25)
+                 # preprocessing_function= blur)
 
       for e in range(epochs):
         print(f'Epoch: {e}')
