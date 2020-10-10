@@ -10,9 +10,11 @@ Follow the steps below for setting up the appropriate environment for model trai
 1. Requisition a GPU with > 1TB additional mounted disk. Ideally a V100 as it trains 3x faster than a P100.
 2. ssh to this GPU and perform the following. and connect to cloud storage (S3Fuse was used)
 3. Clone this GitHub repo
+4. Navigate to this repo `cd capstone_fall20_irrigation`
+5. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
 4. Run `sh ./setup/prep_workspace.sh` - this will create a directory structure expected by the model
 5. Copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
-5. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
+
 6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:  
 `docker run -it --rm -v /root/capstone_fall20_irrigation:/capstone_fall20_irrigation -v /mnt/irrigation.data:/data irgapp bash`
 7. The above command will place you withini the docker container. Train the model using the following:  
