@@ -21,8 +21,11 @@ RUN pip install rasterio
 RUN pip install matplotlib
 RUN pip install tqdm
 
-WORKDIR /
+# Make a copy of the repo within the docker container
+RUN git clone https://github.com/mariaauslander/capstone_fall20_irrigation.git
 
-RUN sh /setup/prep_workspace.sh
+WORKDIR /capstone_fall20_irrigation
+
+RUN sh setup/prep_workspace.sh
 
 
