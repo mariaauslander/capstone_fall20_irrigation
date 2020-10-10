@@ -144,10 +144,10 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
                   channel_shift_range=0.1,
                   zoom_range=0.25,
                   preprocessing_function= blur)
-#       print(f'Trainable variables: {model.trainable_weights}')
+
       for e in range(epochs):
         print(f'Epoch: {e}')
-        batches = 0
+        batches = 1
         dfs = []
         for batch in training_data:
           aug_batch = datagen.flow(batch, batch_size=BATCH_SIZE)
@@ -155,13 +155,14 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
                               callbacks=[time_callback],
                               class_weight=class_weight)
           batches += 1
-          df = pd.DataFrame(history.history)
-          df['times'] = time_callback.times
-          dfs.append(df)
+          #print(history.history) 
           if batches >= steps_per_epoch:
               # we need to break the loop by hand because
               # the generator loops indefinitely
-              model.evaluate(val_data,steps=validation_steps)
+              history = model.evaluate(val_data,steps=validation_steps)
+              df = pd.DataFrame(history.history)
+              df['times'] = time_callback.times
+              dfs.append(df)
               break
       df = pd.concat(dfs)
     
