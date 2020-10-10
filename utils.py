@@ -1,4 +1,7 @@
 import tensorflow as tf
+import cv2
+from tensorflow.keras.preprocessing import image
+
 
 def read_tfrecord(example):
     BAND_STATS = {
@@ -94,15 +97,15 @@ def read_tfrecord(example):
 
     # Finally resize the 20m data and stack the bands together.
     img = tf.concat([bands_10m, tf.image.resize(bands_20m, [120, 120], method='bicubic')], axis=2)
-
+    
     multi_hot_label = reshaped_example['original_labels_multi_hot']
     binary_label = reshaped_example['binary_labels']
-
+    
     # Can update this to return the multilabel if doing multi-class classification
     return img, binary_label
-
-
-def get_batched_dataset(filenames, batch_size):
+  
+  
+def get_batched_dataset(filenames, batch_size, augment=False):
     option_no_order = tf.data.Options()
     option_no_order.experimental_deterministic = False
 
@@ -110,8 +113,9 @@ def get_batched_dataset(filenames, batch_size):
     print(f'Filenames: {filenames}')
     dataset = dataset.with_options(option_no_order)
     dataset = dataset.interleave(tf.data.TFRecordDataset, cycle_length=2, num_parallel_calls=1)
-    dataset = dataset.shuffle(buffer_size=2048).repeat()
-
+    dataset = dataset.shuffle(buffer_size=2048)
+    #.repeat()
+    
     dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
     dataset = dataset.batch(batch_size, drop_remainder=False)  # drop_remainder will be needed on TPU
     dataset = dataset.prefetch(5)  #

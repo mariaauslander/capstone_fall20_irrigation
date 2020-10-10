@@ -15,6 +15,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 from utils import *
 import argparse
+import cv2
 
 print(f'Using TensorFlow Version: {tf.__version__}')
 sns.set()
@@ -45,6 +46,7 @@ def build_model(imported_model, use_pretrain, metrics = METRICS, output_bias=Non
   if output_bias is not None:
     output_bias = tf.keras.initializers.Constant(output_bias)
   if use_pretrain:
+    # This option cannot actually be used due to incompatibility with input tensor shapes
     model = imported_model(include_top=False, weights='imagenet', input_tensor=None, input_shape=[120,120, 10],  pooling=None)
     model.trainable = False
   else:
@@ -65,6 +67,8 @@ def build_model(imported_model, use_pretrain, metrics = METRICS, output_bias=Non
   model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
               optimizer='adam',
               metrics=metrics)
+#   print(f'Trainable variables: {model.trainable_weights}')
+  
   return model
 
 
@@ -79,7 +83,7 @@ class TimeHistory(tf.keras.callbacks.Callback):
         self.times.append(time.time() - self.epoch_time_start)
 
 
-def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet50, pretrain=False):
+def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet50, pretrain=False, augment=False):
     print(50 * "*")
     print(f"Running model: {name}")
     print(50 * "=")
@@ -100,7 +104,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         print("Not Using Weights")
 
     training_filenames = f'{TFR_PATH}/balanced_train_0.tfrecord'
-    validation_filenames = f'{TFR_PATH}/val-part-0.tfrecord'
+    validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
@@ -119,24 +123,63 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         restore_best_weights=True)
 
     time_callback = TimeHistory()
-
+    
+    print(f'Using Model Architecture: {architecture}')
+          
     model = build_model(imported_model=architecture,
                         use_pretrain=pretrain)
+    #print(f'Trainable variables: {model.trainable_weights}')
     model.summary()
 
-    history = model.fit(training_data,
+    
+    if augment:
+      def blur(img):
+        return (cv2.GaussianBlur(img,(5,5),0))
+      datagen = image.ImageDataGenerator(
+                  rotation_range=180,
+                  width_shift_range=0.2,
+                  height_shift_range=0.2,
+                  horizontal_flip=True,
+                  vertical_flip=True,
+                  channel_shift_range=0.1,
+                  zoom_range=0.25,
+                  preprocessing_function= blur)
+#       print(f'Trainable variables: {model.trainable_weights}')
+      for e in range(epochs):
+        print(f'Epoch: {e}')
+        batches = 0
+        dfs = []
+        for batch in training_data:
+          aug_batch = datagen.flow(batch, batch_size=BATCH_SIZE)
+          history = model.fit(aug_batch[0][0],aug_batch[0][1],
+                              callbacks=[time_callback],
+                              class_weight=class_weight)
+          batches += 1
+          df = pd.DataFrame(history.history)
+          df['times'] = time_callback.times
+          dfs.append(df)
+          if batches >= steps_per_epoch:
+              # we need to break the loop by hand because
+              # the generator loops indefinitely
+              model.evaluate(val_data,steps=validation_steps)
+              break
+      df = pd.concat(dfs)
+    
+    else:
+      history = model.fit(training_data,
                         epochs=epochs,
                         steps_per_epoch=steps_per_epoch,
                         validation_data=val_data,
                         validation_steps=validation_steps,
                         callbacks=[time_callback, early_stop],
                         class_weight=class_weight)
-    times = time_callback.times
-
-    model.save(f'{OUTPUT_PATH}/{name}.h5')
-    df = pd.DataFrame(history.history)
-    df['times'] = time_callback.times
+      times = time_callback.times
+      df = pd.DataFrame(history.history)
+      df['times'] = time_callback.times
+    
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
+    model.save(f'{OUTPUT_PATH}/{name}.h5')
+      
 
     return df
 
@@ -154,6 +197,8 @@ if __name__ == '__main__':
                         help="number of epochs to run")
     parser.add_argument('-w', '--weights', default=False, type=bool,
                        help="whether to use weights")
+    parser.add_argument('-g', '--augment', default="False", type=str, choices = ['True', 'False'],
+                       help="whether to augment the training data")
     args = parser.parse_args()
 
     arch_dict = {'ResNet50': ResNet50,
@@ -161,10 +206,15 @@ if __name__ == '__main__':
                  'Xception':Xception,
                  'InceptionV3':InceptionV3}
     
+    AUGMENT = False
+    if args.augment == 'True':
+      AUGMENT = True
+        
     run_model(args.output,
                   BATCH_SIZE=args.BATCH_SIZE,
                   epochs=args.EPOCHS,
                   weights=False,
                   architecture=arch_dict[args.arch],
-                  pretrain=False)
+                  pretrain=False,
+                  augment=AUGMENT)
 
