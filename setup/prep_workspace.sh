@@ -1,4 +1,4 @@
-mkdir ../BigEarthData
-mkdir ../BigEarthData/models
-mkdir ../BigEarthData/tfrecords
-ls -l ../BigEarthData
+mkdir /capstone_fall20_irrigation/BigEarthData
+mkdir /capstone_fall20_irrigation/BigEarthData/models
+mkdir /capstone_fall20_irrigation/BigEarthData/tfrecords
+ls -l /capstone_fall20_irrigation/BigEarthData
