@@ -143,33 +143,26 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
       def blur(img):
         return (cv2.GaussianBlur(img,(5,5),0))
       datagen = image.ImageDataGenerator(
-                  #rotation_range=180,
-                  #width_shift_range=0.2,
-                  #height_shift_range=0.2,
-                  #horizontal_flip=True,
-                  #vertical_flip=True,
+                  rotation_range=180,
+                  width_shift_range=0.2,
+                  height_shift_range=0.2,
+                  horizontal_flip=True,
+                  vertical_flip=True,
                   channel_shift_range=0.5,)
-                 # zoom_range=0.25)
-                 # preprocessing_function= blur)
+                  zoom_range=0.25)
+                  preprocessing_function= blur)
+      aug_data = datagen.flow(train_X, train_y, batch_size=BATCH_SIZE, shuffle=True)
 
-      for e in range(epochs):
-        print(f'Epoch: {e}')
-        batches = 1
-        dfs = []
-        for batch in training_data:
-          aug_batch = datagen.flow(batch, batch_size=BATCH_SIZE)
-          history = model.fit(aug_batch[0][0],aug_batch[0][1],
-                              callbacks=[time_callback],
-                              class_weight=class_weight)
-          batches += 1
-          #print(history.history) 
-          if batches >= steps_per_epoch:
-              # we need to break the loop by hand because
-              # the generator loops indefinitely
-              history = model.evaluate(val_data,steps=validation_steps)
-              df = pd.DataFrame(history)
-              dfs.append(df)
-              break
+      history = model.fit(aug_data,
+                        epochs=epochs,
+                        steps_per_epoch=steps_per_epoch,
+                        validation_data=val_data,
+                        validation_steps=validation_steps,
+                        callbacks=[time_callback, early_stop],
+                        class_weight=class_weight)
+      times = time_callback.times
+      df = pd.DataFrame(history.history)
+      df['times'] = time_callback.times
       df = pd.concat(dfs)
     
     else:
