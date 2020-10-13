@@ -148,8 +148,8 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
                   height_shift_range=0.2,
                   horizontal_flip=True,
                   vertical_flip=True,
-                  channel_shift_range=0.5,)
-                  zoom_range=0.25)
+                  channel_shift_range=0.5,
+                  zoom_range=0.25,
                   preprocessing_function= blur)
       aug_data = datagen.flow(train_X, train_y, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -163,7 +163,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
       times = time_callback.times
       df = pd.DataFrame(history.history)
       df['times'] = time_callback.times
-      df = pd.concat(dfs)
+      
     
     else:
       history = model.fit(training_data,
