@@ -180,7 +180,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
     
     if augment:
 
-      datagen = image.ImageDataGenerator(
+    datagen = image.ImageDataGenerator(
             rotation_range=180,
             width_shift_range=0.10,
             height_shift_range=0.10,
