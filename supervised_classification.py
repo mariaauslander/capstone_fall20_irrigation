@@ -123,9 +123,9 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
 
     # Use an early stopping callback and our timing callback
     early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor='val_precision',
+        monitor='val_auc',
         verbose=1,
-        patience=25,
+        patience=15,
         mode='max',
         restore_best_weights=True)
 
