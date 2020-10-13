@@ -82,7 +82,46 @@ class TimeHistory(tf.keras.callbacks.Callback):
     def on_epoch_end(self, batch, logs={}):
         self.times.append(time.time() - self.epoch_time_start)
 
+def augfunc(sample):        
+    # Randomly apply transformation (color distortions) with probability p.
+    sample = _random_apply(_color_jitter, sample, p=0.8)
+    sample = _random_apply(_color_drop, sample, p=0.2)
+    sample = _random_apply(_blur, sample, p=0.5)
 
+    return sample
+
+def _color_jitter( x, s=1):
+    # one can also shuffle the order of following augmentations
+    # each time they are applied.
+    x = tf.image.random_brightness(x, max_delta=0.8*s)
+    x = tf.image.random_contrast(x, lower=1-0.8*s, upper=1+0.8*s)
+    dx = tf.image.random_saturation(x[:,:,:3], lower=1-0.8*s, upper=1+0.8*s)
+    dx = tf.image.random_hue(dx, max_delta=0.2*s)
+    x = tf.concat([dx, x[:,:,3:]],axis=2)
+    x = tf.clip_by_value(x, 0, 1)
+    return x
+
+def _color_drop(x):
+    dx = tf.image.rgb_to_grayscale(x[:,:,:3])
+    dx = tf.tile(dx, [1, 1, 3])
+    x = tf.concat([dx, x[:,:,3:]],axis=2)
+    return x
+
+def _blur(x):
+    # SimClr implementation is applied at 10% of image size with a random sigma
+    p = np.random.uniform(0.1,2)
+    if type(x) == np.ndarray:
+        return (cv2.GaussianBlur(x,(5,5),p))
+    return (cv2.GaussianBlur(x.numpy(),(5,5),p))
+
+def _random_apply(func, x, p):
+    return tf.cond(
+      tf.less(tf.random.uniform([], minval=0, maxval=1, dtype=tf.float32),
+              tf.cast(p, tf.float32)),
+      lambda: func(x),
+      lambda: x)
+        
+        
 def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet50, pretrain=False, augment=False):
     print(50 * "*")
     print(f"Running model: {name}")
@@ -140,17 +179,15 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
 
     
     if augment:
-      def blur(img):
-        return (cv2.GaussianBlur(img,(5,5),0))
+
       datagen = image.ImageDataGenerator(
-                  rotation_range=180,
-                  width_shift_range=0.2,
-                  height_shift_range=0.2,
-                  horizontal_flip=True,
-                  vertical_flip=True,
-                  channel_shift_range=0.5,
-                  zoom_range=0.25,
-                  preprocessing_function= blur)
+            rotation_range=180,
+            width_shift_range=0.10,
+            height_shift_range=0.10,
+            horizontal_flip=True,
+            vertical_flip=True,
+            zoom_range=0.20,
+            preprocessing_function= augfunc)
       aug_data = datagen.flow(train_X, train_y, batch_size=BATCH_SIZE, shuffle=True)
 
       history = model.fit(aug_data,
