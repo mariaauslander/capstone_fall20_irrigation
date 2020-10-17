@@ -54,7 +54,7 @@ sudo s3fs irrigation.data /mnt/irrigation_data -o passwd_file=$HOME/.cos_creds -
 4. Navigate to this repo `cd capstone_fall20_irrigation`
 5. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
 6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:  
-`nvidia-docker run -it --rm -v /mnt/irrigation.data:/data irgapp bash`
+`nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
 7. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
 8. The #6 command command will place you within the docker container. Train the model using the following:  
 `python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT`
