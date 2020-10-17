@@ -24,6 +24,28 @@ cd s3fs-fuse
 ./configure
 make
 sudo make install
+
+Substitue your values for <Access_Key_ID> and <Secret_Access_Key> in the below command.
+echo "<Access_Key_ID>:<Secret_Access_Key>" > $HOME/.cos_creds
+chmod 600 $HOME/.cos_creds
+
+pip install --upgrade s3cmd
+
+# Sub your access keys in the config file below
+cat >.s3cfg << eof
+ [default]
+
+access_key = <Access_Key_ID>
+secret_key = <Secret_Access_Key>
+gpg_command = /usr/local/bin/gpg
+# host_base = s3.private.us-south.cloud-object-storage.appdomain.cloud
+# host_bucket = %(bucket)s.s3.private.us-south.cloud-object-storage.appdomain.cloud
+host_base =s3.private.us-east.cloud-object-storage.appdomain.cloud
+host_bucket = %(bucket)ss3.private.us-east.cloud-object-storage.appdomain.cloud
+use_https = True
+eof
+
+
 ```
 3. Clone this GitHub repo
 4. Navigate to this repo `cd capstone_fall20_irrigation`
