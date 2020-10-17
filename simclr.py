@@ -89,7 +89,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
 
     return loss    
 
-def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
+def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     
     print(50 * "*")
     print(f"Running model: SimCLR {name}")
@@ -139,19 +139,10 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
 
         epoch_wise_loss.append(np.mean(step_wise_loss))
         
-        if epoch % 10 == 0:
-            print("epoch: {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
+        
+        print("epoch: {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
     
-    
-    epoch_wise_loss, simclr  = train_simclr(simclr_2,
-                                            train_ds,
-                                            optimizer,
-                                            criterion,
-                                            temperature=0.1,
-                                            epochs=epochs)
-    
-    
-    simclr.save(f'{OUTPUT_PATH}/{name}.h5')
+    simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
     df = pd.DataFrame(epoch_wise_loss)
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
@@ -169,6 +160,8 @@ if __name__ == '__main__':
                        help="batch size to use during training and validation")
     parser.add_argument('-e', '--EPOCHS', default=50, type=int,
                         help="number of epochs to run")
+    parser.add_argument('-t', '--TEMPERATURE', default=0.1, type=float,
+                        help="temperature to use during contrastive loss calculation")
     args = parser.parse_args()
 
     arch_dict = {'ResNet50': ResNet50,
@@ -179,5 +172,6 @@ if __name__ == '__main__':
     run_model(args.output,
                   BATCH_SIZE=args.BATCH_SIZE,
                   epochs=args.EPOCHS,
-                  architecture=arch_dict[args.arch])
+                  architecture=arch_dict[args.arch],
+                  temperature=args.TEMPERATURE)
 
