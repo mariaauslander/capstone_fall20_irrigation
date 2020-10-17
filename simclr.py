@@ -114,7 +114,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     simclr_2 = build_simclr_model(architecture,1024, 512, 128)
     simclr_2.summary()
 
-    step_wise_loss = []
+    
     epoch_wise_loss = []
     
     time_callback = TimeHistory()
@@ -140,22 +140,23 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     min_loss_epoch = 0
     
     for epoch in tqdm(range(epochs)):
-        for image_batch in tqdm(training_data):
-            a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
-            b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
+      step_wise_loss = []
+      for image_batch in tqdm(training_data):
+        a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
+        b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
 
-            loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
-            step_wise_loss.append(loss)
+        loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
+        step_wise_loss.append(loss)
 
-        epoch_wise_loss.append(np.mean(step_wise_loss))
-        # Print the loss after every epoch
-        print("****epoch: {} loss: {:.3f}****\n".format(epoch + 1, epoch_wise_loss[-1]))
+      epoch_wise_loss.append(np.mean(step_wise_loss))
+      # Print the loss after every epoch
+      print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
-        # Save best weights
-        if epoch_wise_loss[-1] < min_loss:
-          # Save the final model with weights
-          simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
-          min_loss_epoch = epoch+1
+      # Save best weights
+      if epoch_wise_loss[-1] < min_loss:
+        # Save the final model with weights
+        simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
+        min_loss_epoch = epoch+1
   
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
