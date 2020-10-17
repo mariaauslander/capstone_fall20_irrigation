@@ -101,7 +101,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
     training_filenames = f'{TFR_PATH}/balanced_train_*.tfrecord'
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
 
-    len_train_records = 9942
+    len_train_records = 9942*5
     steps_per_epoch = len_train_records // BATCH_SIZE
     
     criterion = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, 
@@ -130,7 +130,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
             preprocessing_function= augment.augfunc)
     
     for epoch in tqdm(range(epochs)):
-        for image_batch in training_data:
+        for image_batch in tqdm(training_data):
             a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
             b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
 
