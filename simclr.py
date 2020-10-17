@@ -90,7 +90,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
     print(50 * "=")
     print(f'Using Model Architecture: {architecture}')
     
-    training_filenames = f'{TFR_PATH}/balanced_train_0.tfrecord'
+    training_filenames = f'{TFR_PATH}/balanced_train_*.tfrecord'
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
 
     len_train_records = 9942
@@ -103,7 +103,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
         initial_learning_rate=0.1, decay_steps=decay_steps)
     optimizer = tf.keras.optimizers.SGD(lr_decayed_fn)
 
-    simclr_2 = build_simclr_model(imported_model=architecture,256, 128, 50)
+    simclr_2 = build_simclr_model(architecture,256, 128, 50)
     simclr_2.summary()
 
     step_wise_loss = []
