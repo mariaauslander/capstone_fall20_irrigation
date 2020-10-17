@@ -35,12 +35,17 @@ What we are looking for is data augmentation techniques that at the very least '
 `nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
 3. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
 4. The #6 command command will place you within the docker container. Train the model using the following:  
-`python simclr.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -t TEMPERATURE`
+`nohup python simclr.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -t TEMPERATURE &`
  where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
                  OUTPUT is a prefix for model file and results file
                  EPOCHS is number of epochs to run (50 is default)
                  BATCH is batch size (default is 32). 
                  TEMPERATURE is the temperature used in the contrastive loss function (default 0.1).
+ 5. The above command will run the python script in background which will allow for grabbing model files as soon as they are saved. You can watch the progress by using the command below.
+ ```
+ tail -f nohup.out
+ ```
+ 
 
 
                  
