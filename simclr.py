@@ -51,7 +51,7 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
         
 
 @tf.function
-def train_step(xis, xjs, model, optimizer, criterion, temperature):
+def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
     with tf.GradientTape() as tape:
         zis = model(xis)
         zjs = model(xjs)
@@ -61,7 +61,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature):
         zjs = tf.math.l2_normalize(zjs, axis=1)
 
         l_pos = losses._dot_simililarity_dim1(zis, zjs)
-        l_pos = tf.reshape(l_pos, (BATCH_SIZE, 1))
+        l_pos = tf.reshape(l_pos, (batch_size, 1))
         l_pos /= temperature
 
         negatives = tf.concat([zjs, zis], axis=0)
@@ -71,16 +71,16 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature):
         for positives in [zis, zjs]:
             l_neg = losses._dot_simililarity_dim2(positives, negatives)
 
-            labels = tf.zeros(BATCH_SIZE, dtype=tf.int32)
+            labels = tf.zeros(batch_size, dtype=tf.int32)
 
             l_neg = tf.boolean_mask(l_neg, negative_mask)
-            l_neg = tf.reshape(l_neg, (BATCH_SIZE, -1))
+            l_neg = tf.reshape(l_neg, (batch_size, -1))
             l_neg /= temperature
 
             logits = tf.concat([l_pos, l_neg], axis=1) 
             loss += criterion(y_pred=logits, y_true=labels)
 
-        loss = loss / (2 * BATCH_SIZE)
+        loss = loss / (2 * batch_size)
 
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -132,7 +132,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
             a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
             b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
 
-            loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1)
+            loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
             step_wise_loss.append(loss)
 
         epoch_wise_loss.append(np.mean(step_wise_loss))
