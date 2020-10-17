@@ -99,7 +99,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
     print(f'Using Model Architecture: {architecture}')
     
     training_filenames = f'{TFR_PATH}/balanced_train_0.tfrecord'
-    training_data = (training_filenames, batch_size=BATCH_SIZE)
+    training_data = (training_filenames, BATCH_SIZE)
 
 #     len_train_records = 9942*5
 #     steps_per_epoch = len_train_records // BATCH_SIZE
