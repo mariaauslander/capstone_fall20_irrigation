@@ -13,7 +13,6 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 from utils import *
 import helpers
-from losses import _dot_simililarity_dim1 as sim_func_dim1, _dot_simililarity_dim2 as sim_func_dim2, losses
 import argparse
 import cv2
 
@@ -54,7 +53,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature):
         zis = tf.math.l2_normalize(zis, axis=1)
         zjs = tf.math.l2_normalize(zjs, axis=1)
 
-        l_pos = sim_func_dim1(zis, zjs)
+        l_pos = losses._dot_simililarity_dim1(zis, zjs)
         l_pos = tf.reshape(l_pos, (BATCH_SIZE, 1))
         l_pos /= temperature
 
@@ -63,7 +62,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature):
         loss = 0
 
         for positives in [zis, zjs]:
-            l_neg = sim_func_dim2(positives, negatives)
+            l_neg = losses._dot_simililarity_dim2(positives, negatives)
 
             labels = tf.zeros(BATCH_SIZE, dtype=tf.int32)
 
