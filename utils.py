@@ -135,9 +135,9 @@ class TimeHistory(tf.keras.callbacks.Callback):
 class Augment():
   def augfunc(self, sample):        
     # Randomly apply transformation (color distortions) with probability p.
-    sample = self._random_apply(_color_jitter, sample, p=0.8)
-    sample = self._random_apply(_color_drop, sample, p=0.2)
-    sample = self._random_apply(_blur, sample, p=0.5)
+    sample = self._random_apply(self._color_jitter, sample, p=0.8)
+    sample = self._random_apply(self._color_drop, sample, p=0.2)
+    sample = self._random_apply(self._blur, sample, p=0.5)
 
     return sample
 
