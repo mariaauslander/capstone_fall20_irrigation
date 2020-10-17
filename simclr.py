@@ -171,6 +171,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     df['zoom'] = ROTATION
     df['jitter'] = ROTATION
     df['blur'] = ROTATION
+    df['best_epoch'] = min_loss_epoch
   
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
