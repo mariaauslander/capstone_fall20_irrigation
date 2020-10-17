@@ -29,10 +29,15 @@ def get_training_dataset(training_filenames, batch_size):
 
 def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
   
-  model = imported_model(include_top=False, weights=None, input_tensor=None, input_shape=[120,120, 10],  pooling='avg')
-  model.trainable = True
+  base_model = imported_model(include_top=False, weights=None, input_shape=[120,120, 10])
+  base_model.trainable = True
   
-  projection_1 = tf.keras.layers.Dense(hidden_1)(model)
+  inputs = tf.keras.layers.Input((120,120, 10))
+  
+  h = base_model(inputs, training=True)
+  h = GlobalAveragePooling2D()(h)
+  
+  projection_1 = tf.keras.layers.Dense(hidden_1)(h)
   projection_1 = tf.keras.layers.Activation("relu")(projection_1)
   projection_2 = tf.keras.layers.Dense(hidden_2)(projection_1)
   projection_2 = tf.keras.layers.Activation("relu")(projection_2)
