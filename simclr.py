@@ -48,10 +48,12 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
   simclr_model = tf.keras.models.Model(inputs, projection_3)
   
   return simclr_model
-        
-
+          
 @tf.function
 def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
+    # Mask to remove positive examples from the batch of negative samples
+    negative_mask = helpers.get_negative_mask(batch_size)
+  
     with tf.GradientTape() as tape:
         zis = model(xis)
         zjs = model(xjs)
