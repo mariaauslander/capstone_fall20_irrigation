@@ -9,12 +9,12 @@ The intent of our work is to develop a deep neural network that will be pre-trai
 
 These studies took significant compute resources which are unavailable to our team, so we start our evaluations by evaluting only the data augmentation techniques determined to be most important based on the previous work on ImageNet while acknowledging differences in our imagery data. We look at geometric modifications such as rotations, flips, shifts and zooms, color distortion (some of the techniques are only applied to the RGB channels, others on all channels), and Gaussian blurring.
 
-## Training
-
-6. Run the docker container interactively passing in the GitHub repo and the mounted files from cloud storage:  
+## Supervised Baseline Training - BigEarthNet Data
+1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
+2. Run the docker container interactively passing in the mounted files from cloud storage:  
 `nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
-7. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
-8. The #6 command command will place you within the docker container. Train the model using the following:  
+3. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
+4. The #6 command command will place you within the docker container. Train the model using the following:  
 `python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT`
  where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
                  OUTPUT is a prefix for model file and results file
@@ -28,6 +28,20 @@ Data augmentation is tested on our supervised model to ensure that:
 2. gather insight into the effectiveness of different techniques with msi data
 
 What we are looking for is data augmentation techniques that at the very least 'do no harm' to our supervised baseline. If we implement data augmentation techniques that make our model perform worse, it would be indicative of the fact that we are destroying important information in our inputs. We expect that techniques that work for supervised learning should also work for unsupervised learning, but the magnitude of the augmentation may need to be tuned as discussed in the [SimCLR paper](https://arxiv.org/pdf/2002.05709.pdf).
+
+## SIMClr Model Training - BigEarthNet Data
+1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
+2. Run the docker container interactively passing in the mounted files from cloud storage:  
+`nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
+3. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
+4. The #6 command command will place you within the docker container. Train the model using the following:  
+`python simclr.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -t TEMPERATURE`
+ where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
+                 OUTPUT is a prefix for model file and results file
+                 EPOCHS is number of epochs to run (50 is default)
+                 BATCH is batch size (default is 32). 
+                 TEMPERATURE is the temperature used in the contrastive loss function (default 0.1).
+
 
                  
            
