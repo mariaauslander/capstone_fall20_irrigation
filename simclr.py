@@ -10,6 +10,7 @@ import json
 import time
 from tensorflow.keras.applications import ResNet50, ResNet101V2, Xception, InceptionV3
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.layers import *
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 from utils import *
 import helpers
@@ -32,18 +33,18 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
   base_model = imported_model(include_top=False, weights=None, input_shape=[120,120, 10])
   base_model.trainable = True
   
-  inputs = tf.keras.layers.Input((120,120, 10))
+  inputs = Input((120,120, 10))
   
   h = base_model(inputs, training=True)
   h = GlobalAveragePooling2D()(h)
   
-  projection_1 = tf.keras.layers.Dense(hidden_1)(h)
-  projection_1 = tf.keras.layers.Activation("relu")(projection_1)
-  projection_2 = tf.keras.layers.Dense(hidden_2)(projection_1)
-  projection_2 = tf.keras.layers.Activation("relu")(projection_2)
-  projection_3 = tf.keras.layers.Dense(hidden_3)(projection_2)
+  projection_1 = Dense(hidden_1)(h)
+  projection_1 = Activation("relu")(projection_1)
+  projection_2 = Dense(hidden_2)(projection_1)
+  projection_2 = Activation("relu")(projection_2)
+  projection_3 = Dense(hidden_3)(projection_2)
 
-  simclr_model = tf.keras.Model(inputs, projection_3)
+  simclr_model = tf.keras.models.Model(inputs, projection_3)
   
   return simclr_model
         
