@@ -138,7 +138,6 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
             step_wise_loss.append(loss)
 
         epoch_wise_loss.append(np.mean(step_wise_loss))
-        wandb.log({"nt_xentloss": np.mean(step_wise_loss)})
         
         if epoch % 10 == 0:
             print("epoch: {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
