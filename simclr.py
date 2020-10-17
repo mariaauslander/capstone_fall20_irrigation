@@ -152,7 +152,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, architecture=InceptionV3):
                                             epochs=epochs)
     
     
-    simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
+    simclr.save(f'{OUTPUT_PATH}/{name}.h5')
     df = pd.DataFrame(epoch_wise_loss)
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
