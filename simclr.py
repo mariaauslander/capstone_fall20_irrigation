@@ -98,7 +98,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     print(50 * "=")
     print(f'Using Model Architecture: {architecture}')
     
-    training_filenames = f'{TFR_PATH}/balanced_train_0.tfrecord'
+    training_filenames = f'{TFR_PATH}/train-part-*.tfrecord'
     training_data = get_training_dataset(training_filenames, BATCH_SIZE)
 
 #     len_train_records = 9942*5
@@ -140,7 +140,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
         epoch_wise_loss.append(np.mean(step_wise_loss))
         
         
-        print("epoch: {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
+        print("****epoch: {} loss: {:.3f}****\n".format(epoch + 1, np.mean(step_wise_loss)))
     
     simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
     df = pd.DataFrame(epoch_wise_loss)
