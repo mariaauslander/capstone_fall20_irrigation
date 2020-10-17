@@ -136,6 +136,9 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
             zoom_range=ZOOM,
             preprocessing_function= augment.augfunc)
     
+    min_loss = 1e6
+    min_loss_epoch = 0
+    
     for epoch in tqdm(range(epochs)):
         for image_batch in tqdm(training_data):
             a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
@@ -145,13 +148,15 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
             step_wise_loss.append(loss)
 
         epoch_wise_loss.append(np.mean(step_wise_loss))
-        
         # Print the loss after every epoch
-        print("****epoch: {} loss: {:.3f}****\n".format(epoch + 1, np.mean(step_wise_loss)))
-    
-    # Save the final model with weights
-    simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
-    
+        print("****epoch: {} loss: {:.3f}****\n".format(epoch + 1, epoch_wise_loss[-1]))
+        
+        # Save best weights
+        if epoch_wise_loss[-1] < min_loss:
+          # Save the final model with weights
+          simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
+          min_loss_epoch = epoch+1
+  
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
     df['temperature'] = temperature
