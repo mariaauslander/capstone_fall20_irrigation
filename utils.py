@@ -118,7 +118,7 @@ def get_batched_dataset(filenames, batch_size, augment=False):
     #.repeat()
     
     dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
-    dataset = dataset.batch(batch_size, drop_remainder=False)  # drop_remainder will be needed on TPU
+    dataset = dataset.batch(batch_size, drop_remainder=True)  # drop_remainder will be needed on TPU
     dataset = dataset.prefetch(5)  #
 
     return dataset
