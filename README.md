@@ -13,7 +13,18 @@ These studies took significant compute resources which are unavailable to our te
 Follow the steps below for setting up the appropriate environment for model training.
 
 1. Requisition a GPU with > 1TB additional mounted disk. Ideally a V100 as it trains 3x faster than a P100.
-2. ssh to this GPU and perform the following. and connect to cloud storage (S3Fuse was used)
+2. ssh to this GPU and perform the following. and connect to cloud storage (S3Fuse was used). You can use the commands below to install S3Fuse on an IBM Cloud device.
+```
+sudo apt-get update
+sudo apt-get install -y automake autotools-dev g++ git libcurl4-openssl-dev libfuse-dev libssl-dev libxml2-dev make pkg-config
+git clone https://github.com/s3fs-fuse/s3fs-fuse.git
+ls
+cd s3fs-fuse
+./autogen.sh
+./configure
+make
+sudo make install
+```
 3. Clone this GitHub repo
 4. Navigate to this repo `cd capstone_fall20_irrigation`
 5. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
