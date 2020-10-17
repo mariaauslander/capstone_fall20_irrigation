@@ -120,13 +120,20 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     time_callback = TimeHistory()
     augment = Augment()
     
+    ROTATION = 180
+    SHIFT = 0.10
+    FLIP = True
+    ZOOM = 0.20
+    JITTER = True
+    BLUR = True
+    
     datagen = image.ImageDataGenerator(
-            rotation_range=180,
-            width_shift_range=0.10,
-            height_shift_range=0.10,
-            horizontal_flip=True,
-            vertical_flip=True,
-            zoom_range=0.20,
+            rotation_range=ROTATION,
+            width_shift_range=SHIFT,
+            height_shift_range=SHIFT,
+            horizontal_flip=FLIP,
+            vertical_flip=FLIP,
+            zoom_range=ZOOM,
             preprocessing_function= augment.augfunc)
     
     for epoch in tqdm(range(epochs)):
@@ -139,11 +146,27 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
 
         epoch_wise_loss.append(np.mean(step_wise_loss))
         
-        
+        # Print the loss after every epoch
         print("****epoch: {} loss: {:.3f}****\n".format(epoch + 1, np.mean(step_wise_loss)))
     
+    # Save the final model with weights
     simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
+    
+    # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
+    df['temperature'] = temperature
+    df['batch_size'] = batch_size
+    df['epochs'] = epochs
+    df['h1'] = 1024
+    df['h2'] = 512
+    df['output_dim'] = 128
+    df['rotation'] = ROTATION
+    df['shift'] = ROTATION
+    df['flip'] = ROTATION
+    df['zoom'] = ROTATION
+    df['jitter'] = ROTATION
+    df['blur'] = ROTATION
+  
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
     return df
