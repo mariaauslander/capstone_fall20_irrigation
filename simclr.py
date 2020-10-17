@@ -32,13 +32,13 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
   model = imported_model(include_top=False, weights=None, input_tensor=None, input_shape=[120,120, 10],  pooling='avg')
   model.trainable = True
   
-  projection_1 = Dense(hidden_1)(model)
-  projection_1 = Activation("relu")(projection_1)
-  projection_2 = Dense(hidden_2)(projection_1)
-  projection_2 = Activation("relu")(projection_2)
-  projection_3 = Dense(hidden_3)(projection_2)
+  projection_1 = tf.keras.layers.Dense(hidden_1)(model)
+  projection_1 = tf.keras.layers.Activation("relu")(projection_1)
+  projection_2 = tf.keras.layers.Dense(hidden_2)(projection_1)
+  projection_2 = tf.keras.layers.Activation("relu")(projection_2)
+  projection_3 = tf.keras.layers.Dense(hidden_3)(projection_2)
 
-  simclr_model = Model(inputs, projection_3)
+  simclr_model = tf.keras.Model(inputs, projection_3)
   
   return simclr_model
         
