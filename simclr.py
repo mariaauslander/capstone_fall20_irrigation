@@ -124,7 +124,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     SHIFT = 0.10
     FLIP = True
     ZOOM = 0.20
-    JITTER = True
+    JITTER = 0.5
     BLUR = True
     
     datagen = image.ImageDataGenerator(
@@ -148,7 +148,8 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
         loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
         step_wise_loss.append(loss)
 
-      epoch_wise_loss.append(np.mean(step_wise_loss))
+      epoch_wise_loss.append(
+      )
       # Print the loss after every epoch
       print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
@@ -161,17 +162,17 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
     df['temperature'] = temperature
-    df['batch_size'] = batch_size
+    df['batch_size'] = BATCH_SIZE
     df['epochs'] = epochs
     df['h1'] = 1024
     df['h2'] = 512
     df['output_dim'] = 128
     df['rotation'] = ROTATION
-    df['shift'] = ROTATION
-    df['flip'] = ROTATION
-    df['zoom'] = ROTATION
-    df['jitter'] = ROTATION
-    df['blur'] = ROTATION
+    df['shift'] = SHIFT
+    df['flip'] = FLIP
+    df['zoom'] = ZOOM
+    df['jitter'] = JITTER
+    df['blur'] = BLUR
     df['best_epoch'] = min_loss_epoch
   
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
