@@ -45,7 +45,9 @@ service docker start
 ```
 
 6. Connect to your cloud storage with the MSI data using S3Fuse. You can use the commands below to install S3Fuse on an IBM Cloud device.
+
 ```
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install -y automake autotools-dev g++ git libcurl4-openssl-dev libfuse-dev libssl-dev libxml2-dev make pkg-config
 git clone https://github.com/s3fs-fuse/s3fs-fuse.git
