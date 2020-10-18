@@ -83,6 +83,6 @@ sudo mkdir -m 777 /mnt/irrigation_data
 sudo s3fs irrigation.data /mnt/irrigation_data -o passwd_file=$HOME/.cos_creds -o sigv2 -o use_path_request_style -o url=https://s3.us-east.objectstorage.softlayer.net
 
 ```
-7. Clone this GitHub repo
+7. Clone this GitHub repo `git clone https://github.com/mariaauslander/capstone_fall20_irrigation.git`
 8. Navigate to this repo `cd capstone_fall20_irrigation`
 9. Build the docker image using the command:  `docker build -t irgapp -f ./setup/tf23.docker .`
