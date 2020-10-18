@@ -147,9 +147,10 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
 
         loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
         step_wise_loss.append(loss)
+      
+      # Append to list of loss by epoch
+      epoch_wise_loss.append(np.mean(step_wise_loss))
 
-      epoch_wise_loss.append(
-      )
       # Print the loss after every epoch
       print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
