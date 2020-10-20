@@ -142,7 +142,7 @@ class Augment():
 
     return sample
 
-  def _color_jitter(self,  x, s=0.5):
+  def _color_jitter(self,  x, s=0.25):
       # one can also shuffle the order of following augmentations
       # each time they are applied.
       x = tf.image.random_brightness(x, max_delta=0.8*s)
