@@ -114,8 +114,7 @@ def get_batched_dataset(filenames, batch_size, augment=False):
     print(f'Filenames: {filenames}')
     dataset = dataset.with_options(option_no_order)
     dataset = dataset.interleave(tf.data.TFRecordDataset, cycle_length=2, num_parallel_calls=1)
-    dataset = dataset.shuffle(buffer_size=2048)
-    #.repeat()
+    dataset = dataset.shuffle(buffer_size=2048).repeat()
     
     dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
     dataset = dataset.batch(batch_size, drop_remainder=True)  # drop_remainder will be needed on TPU

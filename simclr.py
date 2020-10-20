@@ -156,6 +156,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
         
       # Save best weights
       if epoch_wise_loss[-1] < min_loss:
+        min_loss = epoch_wise_loss[-1]
         # Save the final model with weights
         simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
         min_loss_epoch = epoch+1

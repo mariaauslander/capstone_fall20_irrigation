@@ -142,21 +142,22 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         class_weight = None
         print("Not Using Weights")
 
-    training_filenames = f'{TFR_PATH}/balanced_train_0.pkl'
+    training_filenames = f'{TFR_PATH}/balanced_train_13percent.tfrecord'
     validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
-    #training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
-    train_df = pd.read_pickle(training_filenames)
-    train_X = train_df.X.values
-    train_y = train_df.y.values
+    training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
+#     train_df = pd.read_pickle(training_filenames)
+#     train_X = train_df.X.values
+#     train_y = train_df.y.values
 
-    train_X = np.stack(train_X)
-    train_y = np.stack(train_y)
+#     train_X = np.stack(train_X)
+#     train_y = np.stack(train_y)
 
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
     len_val_records = 4384 
-    len_train_records = 9942
+    len_train_records = 640
+#     len_train_records = 9942
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE
 
@@ -180,7 +181,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
     
     if augment:
 
-    datagen = image.ImageDataGenerator(
+      datagen = image.ImageDataGenerator(
             rotation_range=180,
             width_shift_range=0.10,
             height_shift_range=0.10,
