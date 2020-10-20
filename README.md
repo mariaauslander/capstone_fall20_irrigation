@@ -9,6 +9,8 @@ The intent of our work is to develop a deep neural network that will be pre-trai
 
 These studies took significant compute resources which are unavailable to our team, so we start our evaluations by evaluting only the data augmentation techniques determined to be most important based on the previous work on ImageNet while acknowledging differences in our imagery data. We look at geometric modifications such as rotations, flips, shifts and zooms, color distortion (some of the techniques are only applied to the RGB channels, others on all channels), and Gaussian blurring.
 
+Following on the work discussed in the [SimCLRv2 paper](https://arxiv.org/pdf/2006.10029.pdf), we consider that a deep, narrow network such as ResNet101 may lead to improved performance over shorter, wider networks. This is where our SimCLR evaluations began. As noted above we apply geometric, color and blur augmentations with random chances of 100%, 80% (20% for color dropping) and 50%, respectively - consistent with the SimCLR literature. We then perform sensitivities about these baseline parameters to determine whether more optimized augmentation hyperparameters exist for our MSI data. In our initial training, loss was not significantly reduced implying learning was minimal during training. We hypothesized this might be due to too strong of color jitter being applied. When reducing the color jitter intensity factor by 50%, we could see marked reductions in the contrastive loss during unsupervised training. It is expected that reducing augmentation intensity will naturally reduce the contrastive loss as the postive pairs (i.e., two augmented version of the same image) will be more similar to one another. Thus, finetuning of our model and evaluating against the validation and test sets is also needed to better distinguish between unsupervised models.
+
 ## Supervised Baseline Training - BigEarthNet Data
 1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
 2. Run the docker container interactively passing in the mounted files from cloud storage:  
@@ -45,8 +47,12 @@ What we are looking for is data augmentation techniques that at the very least '
  ```
  tail -f nohup.out
  ```
- 
 
+## Fine-tuning of Pre-trained Model
+1. Currently this is done using the finetuning notebook. It will be converted to a script that can be executed with simple command line arguments.
+2. Initial studies focused on extracted the pre-trained neural encoder (ResNet101V2) *AND* two layers of the MLP projected head. All pretrained weights were frozen.
+3. Two additional MLP layers were added and trained during the finetuning.
+4. We plan to assess different learning rates and evaluating the above method against finetuning ALL weights.
 
                  
            
