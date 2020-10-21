@@ -142,7 +142,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         class_weight = None
         print("Not Using Weights")
 
-    training_filenames = f'{TFR_PATH}/balanced_train_13percent.tfrecord'
+    training_filenames = f'{TFR_PATH}/balanced_train_3percent.tfrecord'
     validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
@@ -156,7 +156,7 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
     len_val_records = 4384 
-    len_train_records = 640
+    len_train_records = 128
 #     len_train_records = 9942
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE

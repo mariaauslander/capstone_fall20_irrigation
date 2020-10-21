@@ -124,7 +124,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     SHIFT = 0.10
     FLIP = True
     ZOOM = 0.20
-    JITTER = 0.25
+    JITTER = 0.75
     BLUR = True
     
     datagen = image.ImageDataGenerator(

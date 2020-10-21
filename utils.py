@@ -1,6 +1,7 @@
 import tensorflow as tf
 import cv2
 import numpy as np
+import time
 from tensorflow.keras.preprocessing import image
 
 
@@ -141,7 +142,7 @@ class Augment():
 
     return sample
 
-  def _color_jitter(self,  x, s=0.25):
+  def _color_jitter(self,  x, s=0.75):
       # one can also shuffle the order of following augmentations
       # each time they are applied.
       x = tf.image.random_brightness(x, max_delta=0.8*s)
