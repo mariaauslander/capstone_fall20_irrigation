@@ -154,12 +154,11 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
       # Print the loss after every epoch
       print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
-      # Save best weights
-      if epoch_wise_loss[-1] < min_loss:
-        min_loss = epoch_wise_loss[-1]
+      # Save weights every five epochs
+      if (epoch > 0) and (epoch % 5 == 0):
+        print(f'Saving weights for epoch: {epoch})
         # Save the final model with weights
-        simclr_2.save(f'{OUTPUT_PATH}/{name}.h5')
-        min_loss_epoch = epoch+1
+        simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch}.h5')
   
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
@@ -175,7 +174,6 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     df['zoom'] = ZOOM
     df['jitter'] = JITTER
     df['blur'] = BLUR
-    df['best_epoch'] = min_loss_epoch
   
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
