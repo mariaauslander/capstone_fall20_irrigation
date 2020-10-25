@@ -78,7 +78,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
       len_train_records = 640
     elif training_dataset == 'balanced_train_3percent.tfrecord':
       len_train_records = 128
-    elif trainin_dataset == 'balanced_train_1percent.tfrecord':
+    elif training_dataset == 'balanced_train_1percent.tfrecord':
       len_train_records = 64
     else:
       len_train_records = 9942 * 5
