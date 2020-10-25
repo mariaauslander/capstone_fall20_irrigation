@@ -76,8 +76,12 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
     len_val_records = 4384 
     if training_dataset == 'balanced_train_13percent.tfrecord':
       len_train_records = 640
-    else:
+    elif training_dataset == 'balanced_train_3percent.tfrecord':
       len_train_records = 128
+    elif trainin_dataset == 'balanced_train_1percent.tfrecord':
+      len_train_records = 64
+    else:
+      len_train_records = 9942 * 5
     
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE
@@ -90,7 +94,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_auc',
         verbose=1,
-        patience=15,
+        patience=25,
         mode='max',
         restore_best_weights=True)
 
@@ -132,7 +136,9 @@ if __name__ == '__main__':
                         help="number of epochs to run")
     parser.add_argument('-t', '--training_data', type=str,
                         choices=['balanced_train_13percent.tfrecord',
-                                 'balanced_train_3percent.tfrecord'])
+                                 'balanced_train_3percent.tfrecord',
+                                 'balanced_train_1percent.tfrecord',
+                                 'balanced_train_*'])
     
     args = parser.parse_args()
     
