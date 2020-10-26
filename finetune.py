@@ -119,7 +119,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
     model.save(f'{OUTPUT_PATH}/{name}.h5')
       
 
-    return df
+    return df.val_auc.max()
   
 if __name__ == '__main__':
     
@@ -149,10 +149,12 @@ if __name__ == '__main__':
     
     model_path = os.path.join(OUTPUT_PATH, args.pretrained)
 
-    run_model(name=args.output,
+    best_score = run_model(name=args.output,
               pretrained_model=model_path,
               BATCH_SIZE=args.BATCH_SIZE,
               epochs=args.EPOCHS,
               training_dataset=args.training_data)
+    
+    print(f'Best Score: {best_score}')
     
     
