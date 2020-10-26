@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for epoch in 2 4 6 8 10 12
+for epoch in 18 16 14 12 10 8 6 4 2 
  do
  for perc in 1 3 13
   do
