@@ -52,7 +52,7 @@ def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
   # define new model
   new_model = tf.keras.models.Model(inputs=pretrained_model.inputs, outputs=output)
 
-  ft_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)  
+  ft_optimizer = tf.keras.optimizers.Adam(learning_rate=0.00005)  
 
   new_model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
               optimizer=ft_optimizer,
