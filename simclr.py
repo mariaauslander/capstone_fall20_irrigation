@@ -51,6 +51,7 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
           
 @tf.function
 def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
+    
     # Mask to remove positive examples from the batch of negative samples
     negative_mask = helpers.get_negative_mask(batch_size)
   
@@ -62,14 +63,18 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
         zis = tf.math.l2_normalize(zis, axis=1)
         zjs = tf.math.l2_normalize(zjs, axis=1)
 
+        # Similarity between all positive pairs
         l_pos = losses._dot_simililarity_dim1(zis, zjs)
         l_pos = tf.reshape(l_pos, (batch_size, 1))
+        
+        # Divide by your temperature variable or tau
         l_pos /= temperature
 
         negatives = tf.concat([zjs, zis], axis=0)
 
         loss = 0
 
+        # First compare the positive pairs to all negative examples in  
         for positives in [zis, zjs]:
             l_neg = losses._dot_simililarity_dim2(positives, negatives)
 
@@ -80,6 +85,8 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
             l_neg /= temperature
 
             logits = tf.concat([l_pos, l_neg], axis=1) 
+            
+            # Cross entropy loss
             loss += criterion(y_pred=logits, y_true=labels)
 
         loss = loss / (2 * batch_size)
@@ -145,7 +152,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
         a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
         b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
 
-        loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=0.1, batch_size=BATCH_SIZE)
+        loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=temperature, batch_size=BATCH_SIZE)
         step_wise_loss.append(loss)
       
       # Append to list of loss by epoch

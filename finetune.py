@@ -74,11 +74,15 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
     len_val_records = 4384 
-    if training_dataset == 'balanced_train_13percent.tfrecord':
-      len_train_records = 640
-    elif training_dataset == 'balanced_train_3percent.tfrecord':
-      len_train_records = 128
-    elif training_dataset == 'balanced_train_1percent.tfrecord':
+    if training_dataset == 'final_balanced_train_10percent.tfrecord':
+      len_train_records = 1024
+    elif training_dataset == 'final_balanced_train_3percent.tfrecord':
+      len_train_records = 256
+    elif training_dataset == 'final_balanced_train_vy_3percent.tfrecord':
+      len_train_records = 256
+    elif training_dataset == 'final_balanced_train_1percent.tfrecord':
+      len_train_records = 64
+    elif training_dataset == 'final_balanced_train_vy_1percent.tfrecord':
       len_train_records = 64
     else:
       len_train_records = 9942 * 5
@@ -135,9 +139,11 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--EPOCHS', default=10, type=int,
                         help="number of epochs to run")
     parser.add_argument('-t', '--training_data', type=str,
-                        choices=['balanced_train_13percent.tfrecord',
-                                 'balanced_train_3percent.tfrecord',
-                                 'balanced_train_1percent.tfrecord',
+                        choices=['final_balanced_train_10percent.tfrecord',
+                                 'final_balanced_train_3percent.tfrecord',
+                                 'final_balanced_train_1percent.tfrecord',
+                                 'final_balanced_train_vy_3percent.tfrecord',
+                                 'final_balanced_train_vy_1percent.tfrecord',
                                  'balanced_train_*'])
     
     args = parser.parse_args()
