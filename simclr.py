@@ -105,7 +105,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     print(50 * "=")
     print(f'Using Model Architecture: {architecture}')
     
-    training_filenames = f'{TFR_PATH}/train-part-*.tfrecord'
+    training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
     training_data = get_training_dataset(training_filenames, BATCH_SIZE)
 
 #     len_train_records = 9942*5
@@ -162,7 +162,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
       print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
       # Save weights every five epochs
-      if (epoch > 0) and (epoch % 5 == 0):
+      if (epoch > 0) and (epoch % 2 == 0):
         print(f'Saving weights for epoch: {epoch})
         # Save the final model with weights
         simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch}.h5')
