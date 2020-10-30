@@ -73,7 +73,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
-    len_val_records = 4384 
+    len_val_records = 4820 
     if training_dataset == 'final_balanced_train_10percent.tfrecord':
       len_train_records = 1024
     elif training_dataset == 'final_balanced_train_3percent.tfrecord':
