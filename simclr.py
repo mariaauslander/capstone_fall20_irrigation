@@ -25,8 +25,8 @@ BASE_PATH = './BigEarthData'
 OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
 TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
 
-def get_training_dataset(training_filenames, batch_size):
-  return get_batched_dataset(training_filenames, batch_size)
+def get_training_dataset(training_filenames, batch_size, ca_flag):
+  return get_batched_dataset(training_filenames, batch_size, simclr=True, ca=ca_flag)
 
 
 def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
@@ -96,7 +96,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
 
     return loss    
 
-def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
+def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     print(50 * "*")
     print(f"Running model: SimCLR {name}")
@@ -106,7 +106,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature):
     print(f'Using Model Architecture: {architecture}')
     
     training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
-    training_data = get_training_dataset(training_filenames, BATCH_SIZE)
+    training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
 
 #     len_train_records = 9942*5
 #     steps_per_epoch = len_train_records // BATCH_SIZE
@@ -200,16 +200,20 @@ if __name__ == '__main__':
                         help="number of epochs to run")
     parser.add_argument('-t', '--TEMPERATURE', default=0.1, type=float,
                         help="temperature to use during contrastive loss calculation")
+    parser.add_argument('-c', '--CALIFORNIA', default='False', type=str,
+                        help="are you running with california data")
     args = parser.parse_args()
 
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2':ResNet101V2,
                  'Xception':Xception,
                  'InceptionV3':InceptionV3}
+    ca_flag_dict = {'True':True, 'False':False}
         
     run_model(args.output,
                   BATCH_SIZE=args.BATCH_SIZE,
                   epochs=args.EPOCHS,
                   architecture=arch_dict[args.arch],
-                  temperature=args.TEMPERATURE)
+                  temperature=args.TEMPERATURE,
+                  ca_flag=ca_flag_dict[args.CALIFORNIA])
 
