@@ -163,7 +163,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
         
       # Save weights every five epochs
       if (epoch > 0) and (epoch % 2 == 0):
-        print(f'Saving weights for epoch: {epoch})
+        print(f'Saving weights for epoch: {epoch}'')
         # Save the final model with weights
         simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch}.h5')
   
