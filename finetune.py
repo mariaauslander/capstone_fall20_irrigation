@@ -61,14 +61,18 @@ def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
 
   return new_model
 
-def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset):
+def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, pred_class):
     print(50 * "*")
     print(f"Running model: {name}")
     print(50 * "=")
     print(f"Batch Size: {BATCH_SIZE}")
 
     training_filenames = f'{TFR_PATH}/{training_dataset}'
-    validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
+    
+    if pred_class == 'Vineyards':
+      validation_filenames = f'{TFR_PATH}/final_balanced_val_vy.tfrecord'
+    else:
+      validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
@@ -138,6 +142,8 @@ if __name__ == '__main__':
                        help="batch size to use during training and validation")
     parser.add_argument('-e', '--EPOCHS', default=10, type=int,
                         help="number of epochs to run")
+    parser.add_argument('-c', '--CLASS', default='Irrigation', type=str,
+                        help="which class to finetune on", choices=['Irrigation', 'Vineyards'])
     parser.add_argument('-t', '--training_data', type=str,
                         choices=['final_balanced_train_10percent.tfrecord',
                                  'final_balanced_train_3percent.tfrecord',
@@ -159,7 +165,8 @@ if __name__ == '__main__':
               pretrained_model=model_path,
               BATCH_SIZE=args.BATCH_SIZE,
               epochs=args.EPOCHS,
-              training_dataset=args.training_data)
+              training_dataset=args.training_data,
+              CLASS = args.CLASS)
     
     print(f'Best Score: {best_score}')
     
