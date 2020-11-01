@@ -6,6 +6,10 @@ from tensorflow.keras.preprocessing import image
 
 
 def read_tfrecord(example):
+    '''
+    THIS FUNCTION IS USED TO PARSE THE TFRECORDS FILES FOR BIGEARTHNET DATA.
+    THE BAND STATISTICS WERE PROVIDED BY THE BIGEARTHNET TEAM
+    '''
     BAND_STATS = {
         'mean': {
             'B01': 340.76769064,
@@ -39,6 +43,9 @@ def read_tfrecord(example):
 
     # Use this one-liner to standardize each feature prior to reshaping.
     def standardize_feature(data, band_name):
+        '''
+        APPLY STANDARDIZATION AND SCALING CONSISTENT WITH BEN PROCEDURE
+        '''
         return ((tf.dtypes.cast(data, tf.float32) - BAND_STATS['mean'][band_name]) / BAND_STATS['std'][band_name])
 
     # decode the TFRecord
@@ -107,6 +114,10 @@ def read_tfrecord(example):
     return img, binary_label
 
 def read_ca_tfrecord(example):
+    '''
+    THE CALIFORNIA DATA HAS DIFFERENT POPULATION STATISTICS AS EXPECETED.
+    CALCULATED VIA THE process_california_data.ipynb file
+    '''
     BAND_STATS = {'mean': {'B02': 725.193505986188,
                           'B03': 1028.5459669514032,
                           'B04': 1258.9655400619445,
@@ -162,7 +173,7 @@ def read_ca_tfrecord(example):
         'B12': tf.reshape(standardize_feature(example['B12'], 'B12'), [120, 120])
     }
 
-    # Next sort the layers by resolution
+    # Next sort the layers by resolution - all the same resolution for CA
     bands_10m = tf.stack([reshaped_example['B04'],
                           reshaped_example['B03'],
                           reshaped_example['B02'],
@@ -181,6 +192,13 @@ def read_ca_tfrecord(example):
     return img, 0
   
 def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca =False):
+    '''
+    This function is used to return a batch generator for training our tensorflow model.
+    basically we read from different tfrecords files, and shuffle our records.
+    we use the appropriate parsing function depending on if it is CA data or BigEarthNet data
+    Finally - if it is a SimCLR model do not repeat the dataset, as we manually loop over our data
+    and train our model in the simclr.py script.
+    '''
     option_no_order = tf.data.Options()
     option_no_order.experimental_deterministic = False
 
@@ -198,12 +216,14 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca =
       dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=10)
     else:
       dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
+      
     dataset = dataset.batch(batch_size, drop_remainder=True)  
     dataset = dataset.prefetch(5)  #
 
     return dataset
 
 class TimeHistory(tf.keras.callbacks.Callback):
+  
     def on_train_begin(self, logs={}):
         self.times = []
 
