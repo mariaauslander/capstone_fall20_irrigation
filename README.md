@@ -19,6 +19,10 @@ Separately we have also developed an independent dataset of Sentinel-2 satellite
 ![BigEarthNet SimCLR F1 Comparison](images/f1score_ca.png)
 ![BigEarthNet SimCLR AUC Comparison](images/extensibility.png)
 
+The results above show that we benefit from pretraining on the California data and extending these learned encoder weights to the BigEarthNet data. We have no labeled data for California, and thus cannot finetune on CA specifically. So the above study was performed to objectively show that our California pretraining was successful. In addition, we have generated a t-SNE grid plot for a subset of our California data. This is shown below.
+
+![tSNE California](images/california_simclr_e50_t1.html)
+
 ## Supervised Baseline Training - BigEarthNet Data
 1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
 2. Run the docker container interactively passing in the mounted files from cloud storage:  
