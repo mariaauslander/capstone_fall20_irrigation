@@ -76,8 +76,9 @@ where PRETRAIN is the filename of the pretrained simclr model (should reside in 
       CLASS is either Irrigation or Vineyards and specifies which class to finetune on
 8. The above script will train and store a keras model file and a pickled data frame with epoch-wise training and validation metrics that can be plotted with the epoch_metrics notebook in the ./notebooks directory
 
-                 
-           
+## California Data Set
+Sentinel-2 Level2A satellite imagery is gathered for the state of California using the Google Earth Engine API. The code to extract the MSI data and write to a TIF file can be found in the gather_california_data.ipynb notebook in the [notebooks directory](notebooks/). The data gathered was focused on agricultural regions of California - primarily the Central Valley, but also the souther region near Calexico as well. Patches of MSI data are gathed in 0.25 degree by 0.25 degree increments. This is roughly 600 square kilometers. In total 96 patches have been gathered, all for 2019 but for random months. This amounts to ~58,000 square kilometers, or roughly 14% the land area of California. The areas covered in our data set so far are shown in the image below.
 
+![California Data Coverage](images/ca_data_coverage.png)
 
 
