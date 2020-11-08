@@ -81,4 +81,4 @@ Sentinel-2 Level2A satellite imagery is gathered for the state of California usi
 
 ![California Data Coverage](images/ca_data_coverage.png)
 
-
+Each image patch is approximately 3458 x 2784 pixels. For consistency with the Big Earth Net data these patches are then tiled into 120 x 120 images, resulting in >600 image tiles per patch, and approximately 64,000 total images for training our California-based SimCLR model. Images are checked to ensure there are no NaNs. If NaNs exist anywhere in the image, the image is thrown out. In some cases when gathering the satellite imagery, it was notice that large swaths of a region were unavailable (likely due to continuous cloud cover). In those cases, an attempt was made to find a month that was more fully available. Each patch was visually inspected to ensure that data was acceptable. This quality assurance was perfomed using the [ca_data_qa notebook](CaliforniaData/) in the CaliforniaData directory.
