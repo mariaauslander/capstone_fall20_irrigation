@@ -16,7 +16,7 @@ Results from runs of our SimCLR model using 100% of the BigEarthNet training dat
 
 Separately we have also developed an independent dataset of Sentinel-2 satellite imagery focused on the agricultural regions of the state of California (see notebook for visualization of this data). We pretrain a SimCLR model using this other dataset, hoping to learn extensible features from our satellite imagery. We then finetune this California based SimCLR model using the BigEarthNet data and still see significant benefits from this non-geographically specific pretraining. This is also an encouraging result suggesting that perhaps region-specific data sets are not required for getting significant value from pretraining. These results are shown in the lower right-hand figure.
 
-![BigEarthNet SimCLR Comparison](images/f1score_ca.png.png)
+![BigEarthNet SimCLR Comparison](images/f1score_ca.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
 1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
