@@ -110,7 +110,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     else:
       training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
       
-    training_data = get_training_dataset(training_filenames, BATCH_SIZE, simclr=True, ca_flag=ca_flag)
+    training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
 
 #     len_train_records = 9942*5
 #     steps_per_epoch = len_train_records // BATCH_SIZE
