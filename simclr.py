@@ -105,8 +105,12 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     print(50 * "=")
     print(f'Using Model Architecture: {architecture}')
     
-    training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
-    training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
+    if ca_flag:
+      training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
+    else:
+      training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
+      
+    training_data = get_training_dataset(training_filenames, BATCH_SIZE, simclr=True, ca_flag=ca_flag)
 
 #     len_train_records = 9942*5
 #     steps_per_epoch = len_train_records // BATCH_SIZE
@@ -131,7 +135,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     SHIFT = 0.10
     FLIP = True
     ZOOM = 0.20
-    JITTER = 0.75
+    JITTER = 0.0
     BLUR = True
     
     datagen = image.ImageDataGenerator(

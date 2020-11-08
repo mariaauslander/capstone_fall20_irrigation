@@ -191,7 +191,7 @@ def read_ca_tfrecord(example):
     
     return img, 0
   
-def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca =False):
+def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca_flag=False):
     '''
     This function is used to return a batch generator for training our tensorflow model.
     basically we read from different tfrecords files, and shuffle our records.
@@ -212,7 +212,7 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca =
     else:
       dataset = dataset.shuffle(buffer_size=2048).repeat()
     
-    if ca:
+    if ca_flag:
       dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=10)
     else:
       dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
@@ -236,8 +236,8 @@ class TimeHistory(tf.keras.callbacks.Callback):
 class Augment():
   def augfunc(self, sample):        
     # Randomly apply transformation (color distortions) with probability p.
-    sample = self._random_apply(self._color_jitter, sample, p=0.8)
-    sample = self._random_apply(self._color_drop, sample, p=0.2)
+    #sample = self._random_apply(self._color_jitter, sample, p=0.8)
+    #sample = self._random_apply(self._color_drop, sample, p=0.2)
     sample = self._random_apply(self._blur, sample, p=0.5)
 
     return sample
