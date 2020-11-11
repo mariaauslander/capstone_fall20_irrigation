@@ -21,6 +21,7 @@ BASE_PATH = './BigEarthData'
 OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
 TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
 
+# Use the following metrics for evaluation
 METRICS = [
           tf.keras.metrics.TruePositives(name='tp'),
           tf.keras.metrics.FalsePositives(name='fp'),
@@ -35,8 +36,10 @@ METRICS = [
 def get_training_dataset(training_filenames, batch_size):
   return get_batched_dataset(training_filenames, batch_size)
 
+
 def get_validation_dataset(validation_filenames, batch_size):
   return get_batched_dataset(validation_filenames, batch_size)
+
 
 def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
   
@@ -52,8 +55,39 @@ def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
   # define new model
   new_model = tf.keras.models.Model(inputs=pretrained_model.inputs, outputs=output)
 
+  # Learning rate of 5e-5 used for finetuning based on hyperparameter evaluations
+  ft_optimizer = tf.keras.optimizers.Adam(learning_rate=0.00005)  
+  
+  # Compile model with Cross Entropy loss
+  new_model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
+              optimizer=ft_optimizer,
+              metrics=metrics)
+
+  return new_model
+
+
+def finetune_pretrained_model(model, num_unfrozen, metrics=METRICS):
+  '''
+  This function is used to simply finetune from the existing projection head, as opposed
+  to stacking a new MLP on top of a projection head output as is done above.
+  '''
+  pretrained_model = tf.keras.models.load_model(model)
+  
+  # Freeze all layers
+  pretrained_model.trainable = False
+  
+  # Unfreeze just the projection head
+  pretrained_model.layers[-num_unfrozen:].trainable=True
+
+  # Add output layer
+  output = tf.keras.layers.Dense(1, activation='sigmoid', name='output')(pretrained_model.layers[-1].output)
+  
+  # define new model
+  new_model = tf.keras.models.Model(inputs=pretrained_model.inputs, outputs=output)
+
   ft_optimizer = tf.keras.optimizers.Adam(learning_rate=0.00005)  
 
+  # Compile model with Cross Entropy loss
   new_model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
               optimizer=ft_optimizer,
               metrics=metrics)
@@ -61,7 +95,7 @@ def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
 
   return new_model
 
-def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, pred_class):
+def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLASS, NUM_UNFROZEN):
     print(50 * "*")
     print(f"Running model: {name}")
     print(50 * "=")
@@ -69,7 +103,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, pred
 
     training_filenames = f'{TFR_PATH}/{training_dataset}'
     
-    if pred_class == 'Vineyards':
+    if CLASS == 'Vineyards':
       validation_filenames = f'{TFR_PATH}/final_balanced_val_vy.tfrecord'
     else:
       validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
@@ -109,8 +143,12 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, pred
     time_callback = TimeHistory()
     
     print(f'Using Pretrained Model: {pretrained_model}')
-          
-    model = load_pretrained_model(pretrained_model)
+    if NUM_UNFROZEN:
+      print(f'Finetuning the SimCLR model from the {3-NUM_UNFROZEN} layer of the projection head')
+      model = finetune_pretrained_model(pretrained_model, NUM_UNFROZEN)
+    else:
+      print(f'Adding new MLP to second layer of Projection head')
+      model = load_pretrained_model(pretrained_model)
     model.summary()
 
     history = model.fit(training_data,
@@ -144,6 +182,8 @@ if __name__ == '__main__':
                         help="number of epochs to run")
     parser.add_argument('-c', '--CLASS', default='Irrigation', type=str,
                         help="which class to finetune on", choices=['Irrigation', 'Vineyards'])
+    parser.add_argument('-u', '--UNFROZEN', default=None, type=int,
+                        help="Number of layers of PH to unfreeze during finetuning. If none, will add new MLP ontop of second PH layer", choices=[1, 2, 3])
     parser.add_argument('-t', '--training_data', type=str,
                         choices=['final_balanced_train_10percent.tfrecord',
                                  'final_balanced_train_3percent.tfrecord',
@@ -166,7 +206,8 @@ if __name__ == '__main__':
               BATCH_SIZE=args.BATCH_SIZE,
               epochs=args.EPOCHS,
               training_dataset=args.training_data,
-              CLASS = args.CLASS)
+              CLASS = args.CLASS
+              NUM_UNFROZEN = args.UNFROZEN)
     
     print(f'Best Score: {best_score}')
     
