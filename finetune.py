@@ -77,7 +77,8 @@ def finetune_pretrained_model(model, num_unfrozen, metrics=METRICS):
   pretrained_model.trainable = False
   
   # Unfreeze just the projection head
-  pretrained_model.layers[-num_unfrozen:].trainable=True
+  for layer in pretrained_model.layers[-num_unfrozen:]:
+      layer.trainable=True
 
   # Add output layer
   output = tf.keras.layers.Dense(1, activation='sigmoid', name='output')(pretrained_model.layers[-1].output)
@@ -206,7 +207,7 @@ if __name__ == '__main__':
               BATCH_SIZE=args.BATCH_SIZE,
               epochs=args.EPOCHS,
               training_dataset=args.training_data,
-              CLASS = args.CLASS
+              CLASS = args.CLASS,
               NUM_UNFROZEN = args.UNFROZEN)
     
     print(f'Best Score: {best_score}')
