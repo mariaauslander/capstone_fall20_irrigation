@@ -236,13 +236,13 @@ class TimeHistory(tf.keras.callbacks.Callback):
 class Augment():
   def augfunc(self, sample):        
     # Randomly apply transformation (color distortions) with probability p.
-    #sample = self._random_apply(self._color_jitter, sample, p=0.8)
-    #sample = self._random_apply(self._color_drop, sample, p=0.2)
+    sample = self._random_apply(self._color_jitter, sample, p=0.8)
+    sample = self._random_apply(self._color_drop, sample, p=0.2)
     sample = self._random_apply(self._blur, sample, p=0.5)
 
     return sample
 
-  def _color_jitter(self,  x, s=0.75):
+  def _color_jitter(self,  x, s=0.50):
       # one can also shuffle the order of following augmentations
       # each time they are applied.
       x = tf.image.random_brightness(x, max_delta=0.8*s)
