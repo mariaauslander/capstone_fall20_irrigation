@@ -215,7 +215,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
       print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
       # Save weights every five epochs
-      if (epoch > 0) and ((epoch+1) % 2 == 0):
+      if (epoch > 0) and ((epoch+1) % 5 == 0):
         print(f'Saving weights for epoch: {epoch+1}')
         # Save the final model with weights
         simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')

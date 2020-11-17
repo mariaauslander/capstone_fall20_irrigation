@@ -44,7 +44,7 @@ def get_validation_dataset(validation_filenames, batch_size):
 def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
   
   pretrained_model = tf.keras.models.load_model(model)
-  pretrained_model.trainable = False  
+  pretrained_model.trainable = True  
 
   h1 = tf.keras.layers.Dense(hidden1, activation='elu', name='dense_ft_1')(pretrained_model.layers[-2].output)
   h1 = tf.keras.layers.Dropout(0.50)(h1)
@@ -74,7 +74,7 @@ def finetune_pretrained_model(model, num_unfrozen, metrics=METRICS):
   pretrained_model = tf.keras.models.load_model(model)
   
   # Freeze all layers
-  pretrained_model.trainable = False
+  pretrained_model.trainable = False 
   
   # Unfreeze just the projection head
   for layer in pretrained_model.layers[-num_unfrozen:]:
@@ -123,6 +123,8 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLAS
       len_train_records = 64
     elif training_dataset == 'final_balanced_train_vy_1percent.tfrecord':
       len_train_records = 64
+    elif training_dataset == 'balanced_train_0.tfrecord':
+      len_train_records = 9942
     else:
       len_train_records = 9942 * 5
     
@@ -145,7 +147,7 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLAS
     
     print(f'Using Pretrained Model: {pretrained_model}')
     if NUM_UNFROZEN:
-      print(f'Finetuning the SimCLR model from the {3-NUM_UNFROZEN} layer of the projection head')
+      print(f'Finetuning the SimCLR model from the {(NUM_UNFROZEN+1)//2} layer of the projection head')
       model = finetune_pretrained_model(pretrained_model, NUM_UNFROZEN)
     else:
       print(f'Adding new MLP to second layer of Projection head')
@@ -173,7 +175,7 @@ if __name__ == '__main__':
     print('In main function')
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
     parser.add_argument('-p', '--pretrained',
-                        choices=[file for file in os.listdir('./BigEarthData/models/') if file[-3:]=='.h5' if file[:6]=='simclr'],
+                        choices=[file for file in os.listdir('./BigEarthData/models/') if file[-3:]=='.h5'],
                         help='Which pretrained model do you want to finetune?')
     parser.add_argument('-o', '--output', type=str,
                         help='Output File Prefix for model file and dataframe')
@@ -184,13 +186,14 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--CLASS', default='Irrigation', type=str,
                         help="which class to finetune on", choices=['Irrigation', 'Vineyards'])
     parser.add_argument('-u', '--UNFROZEN', default=None, type=int,
-                        help="Number of layers of PH to unfreeze during finetuning. If none, will add new MLP ontop of second PH layer", choices=[1, 2, 3])
+                        help="Number of layers of PH to unfreeze during finetuning. If none, will add new MLP ontop of second PH layer", choices=[1, 3, 5])
     parser.add_argument('-t', '--training_data', type=str,
                         choices=['final_balanced_train_10percent.tfrecord',
                                  'final_balanced_train_3percent.tfrecord',
                                  'final_balanced_train_1percent.tfrecord',
                                  'final_balanced_train_vy_3percent.tfrecord',
                                  'final_balanced_train_vy_1percent.tfrecord',
+                                 'balanced_train_0.tfrecord',
                                  'balanced_train_*'])
     
     args = parser.parse_args()
