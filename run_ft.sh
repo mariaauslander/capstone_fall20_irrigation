@@ -11,7 +11,7 @@ for epoch in 5 10 15 20 25 30 35 40 45 50
                       -u 1 >> ft_1ph_${epoch}_epoch.out
 # End over percentages
 done
-cp ft_${epoch}_epoch.out /data
+cp ft_1ph_${epoch}_epoch.out /data
 rsync -aP ./BigEarthData/models /data
 # End over epochs
 done
