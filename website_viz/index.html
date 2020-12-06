@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
+<style>
+.map {
+  background-image: url('./data/map.png');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 733px 880px;
+  background-position: 50px 90px;
+  background-blend-mode: lighten;
+}
+</style>
+
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
 
 <!-- Create a div where the graph will take place -->
-<div id="my_dataviz"></div>
+<div id="my_dataviz" class = "map" ></div>
 
 <!-- Load color palettes -->
 <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
@@ -56,8 +67,8 @@ d3.csv("./data/grid_info.csv", function(data) {
 
   // Build color scale
   var myColor = d3.scaleSequential()
-    .interpolator(d3.interpolateYlGn)
-    .domain([1,15])
+    .interpolator(d3.interpolateGreys)
+    .domain([0,0.6])
 
   // create a tooltip
   var tooltip = d3.select("#my_dataviz")
@@ -76,21 +87,30 @@ d3.csv("./data/grid_info.csv", function(data) {
       .style("opacity", 0.5)
     d3.select(this)
       .style("stroke", "black")
-      .style("opacity", 0.3)
+      .style("opacity", 0.5)
   }
 
   var mousemove = function(d) {
-    tooltip
-      .html("The exact value of<br>this cell is: " + d.value)
-      .style("left", (d3.mouse(this)[0]) + "px")
-      .style("top", (d3.mouse(this)[1]) + "px")
+    if (d.value > 0){
+      tooltip
+        .html("Predicted irrigated fraction : " + d.value*100 + "%")
+        .style("left", (d3.mouse(this)[0]) + "px")
+        .style("top", (d3.mouse(this)[1]) + "px")
+    }
+    else {
+      tooltip
+        .html("Non-predicted area")
+        .style("left", (d3.mouse(this)[0]) + "px")
+        .style("top", (d3.mouse(this)[1]) + "px")
+    }
   }
+
   var mouseleave = function(d) {
     tooltip
       .style("opacity", 0)
     d3.select(this)
       .style("stroke", "none")
-      .style("opacity", 0.3)
+      .style("opacity", 0.5)
   }
 
   // add the squares
@@ -107,7 +127,7 @@ d3.csv("./data/grid_info.csv", function(data) {
       .style("fill", function(d) { return myColor(d.value)} )
       .style("stroke-width", 4)
       .style("stroke", "none")
-      .style("opacity", 0.3) //0.3
+      .style("opacity", 0.5) //0.3
     .on("mouseover", mouseover)
     .on("mousemove", mousemove, function(){
       console.log( d3.event.pageX, d3.event.pageY )
@@ -131,7 +151,7 @@ svg.append("text")
         .style("font-size", "14px")
         .style("fill", "grey")
         .style("max-width", 400)
-        .text("Provide more information for our models.");
+        .text("Land tiles are shaded on a scale of yellow to green based on an increasing proportion of irrigated land.");
 
 // Add location text
 // NEVADA
@@ -242,7 +262,7 @@ svg.append("circle")
 
 // Salinas
 svg.append("text")
-        .attr("x", 58)
+        .attr("x", 65)
         .attr("y", 405)
         .attr("text-anchor", "left")
         .style("font-size", "14px")
@@ -252,7 +272,7 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 80)
+        .attr("cx", 87)
         .attr("cy", 415)
         .style("fill", "black");
 
@@ -274,8 +294,8 @@ svg.append("circle")
 
 // Los Angeles
 svg.append("text")
-        .attr("x", 335)
-        .attr("y", 725)
+        .attr("x", 315)
+        .attr("y", 705)
         .attr("text-anchor", "left")
         .style("font-size", "16px")
         .style("fill", "black")
@@ -284,14 +304,14 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 432)
-        .attr("cy", 710)
+        .attr("cx", 412)
+        .attr("cy", 690)
         .style("fill", "black");
 
 // Long Beach
 svg.append("text")
-        .attr("x", 352)
-        .attr("y", 753)
+        .attr("x", 332)
+        .attr("y", 733)
         .attr("text-anchor", "left")
         .style("font-size", "14px")
         .style("fill", "black")
@@ -300,14 +320,14 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 435)
-        .attr("cy", 740)
+        .attr("cx", 415)
+        .attr("cy", 720)
         .style("fill", "black");
 
 // Riverside
 svg.append("text")
-        .attr("x", 505)
-        .attr("y", 732)
+        .attr("x", 485)
+        .attr("y", 712)
         .attr("text-anchor", "left")
         .style("font-size", "14px")
         .style("fill", "black")
@@ -316,14 +336,14 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 500)
-        .attr("cy", 722)
+        .attr("cx", 480)
+        .attr("cy", 702)
         .style("fill", "black");
 
 // San Diego
 svg.append("text")
         .attr("x", 432)
-        .attr("y", 828)
+        .attr("y", 818)
         .attr("text-anchor", "left")
         .style("font-size", "16px")
         .style("fill", "black")
@@ -332,13 +352,13 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 510)
-        .attr("cy", 835)
+        .attr("cx", 515)
+        .attr("cy", 825)
         .style("fill", "black");
 
 // Tijuana
 svg.append("text")
-        .attr("x", 523)
+        .attr("x", 533)
         .attr("y", 850)
         .attr("text-anchor", "left")
         .style("font-size", "16px")
@@ -348,7 +368,7 @@ svg.append("text")
 
 svg.append("circle")
         .attr("r", 2)
-        .attr("cx", 520)
+        .attr("cx", 525)
         .attr("cy", 855)
         .style("fill", "black");
 
@@ -424,7 +444,7 @@ svg.append("polygon")
 // San Gorgonio Mt.
 svg.append("text")
         .attr("x", 543)
-        .attr("y", 702)
+        .attr("y", 682)
         .attr("text-anchor", "left")
         .style("font-size", "14px")
         .style("fill", "black")
@@ -432,9 +452,9 @@ svg.append("text")
         .text("San Gorgonio Mt.");
 
 var trianglePoints2 = [
-  [539.5, 703],
-  [537, 708],
-  [542, 708]
+  [539.5, 683],
+  [537, 688],
+  [542, 688]
 ];
 
 svg.append("polygon")
