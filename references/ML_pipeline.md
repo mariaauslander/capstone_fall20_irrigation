@@ -1,5 +1,10 @@
 
 
+# Dataset preparation
+#### Option 1: Using the raw data from S3 bucket
+1. Login to EC2 instance
+2. Create folder using 'mkdir s3_data'
+3. Run 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
