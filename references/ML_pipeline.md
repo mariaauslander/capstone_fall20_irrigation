@@ -5,6 +5,7 @@
 1. Login to EC2 instance
 2. Create folder using 'mkdir s3_data'
 3. Run 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
+Note: Will update the above steps based on the correct folder structure.
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
