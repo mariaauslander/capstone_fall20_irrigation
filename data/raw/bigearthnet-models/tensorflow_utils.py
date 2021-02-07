@@ -49,7 +49,7 @@ def create_split(root_folder, patch_names, TFRecord_writer, label_indices, GDAL_
         import gdal
     elif RASTERIO_EXISTED:
         import rasterio
-    progress_bar = tf.contrib.keras.utils.Progbar(target = len(patch_names))
+    progress_bar = tf.keras.utils.Progbar(target = len(patch_names))
     for patch_idx, patch_name in enumerate(patch_names):
         patch_folder_path = os.path.join(root_folder, patch_name)
         bands = {}
@@ -93,12 +93,12 @@ def prep_tf_record_files(root_folder, out_folder, split_names, patch_names_list,
         writer_list = []
         for split_name in split_names:
             writer_list.append(
-                    tf.compat.v1.python_io.TFRecordWriter(os.path.join(
+                    tf.io.TFRecordWriter(os.path.join(
                         out_folder, split_name + '.tfrecord'))
                 )
     except:
         print('ERROR: TFRecord writer is not able to write files')
-        exit()
+        return
 
     for split_idx in range(len(patch_names_list)):
         print('INFO: creating the split of', split_names[split_idx], 'is started')
