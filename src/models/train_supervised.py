@@ -21,9 +21,9 @@ print(f'Using TensorFlow Version: {tf.__version__}')
 #sns.set()
 
 # Set Paths
-BASE_PATH = './BigEarthData'
-OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
-TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
+BASE_PATH = '/workspace/app'
+OUTPUT_PATH = os.path.join(BASE_PATH, 'models/supervised')
+TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
 
 def get_training_dataset(training_filenames, batch_size):
   return get_batched_dataset(training_filenames, batch_size)
@@ -142,8 +142,10 @@ def run_model(name, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet
         class_weight = None
         print("Not Using Weights")
 
-    training_filenames = f'{TFR_PATH}/balanced_train_3percent.tfrecord'
-    validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
+    # training_filenames = f'{TFR_PATH}/balanced_train_3percent.tfrecord'
+    # validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
+    training_filenames = f'{TFR_PATH}/train.tfrecord'
+    validation_filenames = f'{TFR_PATH}/val.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
 #     train_df = pd.read_pickle(training_filenames)
