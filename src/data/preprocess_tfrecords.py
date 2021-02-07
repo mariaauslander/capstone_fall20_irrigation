@@ -74,7 +74,7 @@ with open(big_earth_models_folder+'label_indices.json', 'rb') as f:
 
 root_folder = big_earth_path
 out_folder = '/workspace/app/data/processed'
-splits = glob(f'{big_earth_models_folder}splits/train.csv')
+#splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/train.csv')
 
 # Checks the existence of patch folders and populate the list of patch folder paths
 csv_file_path_list = ['splits/train.csv', 'splits/test.csv', 'splits/val.csv']
