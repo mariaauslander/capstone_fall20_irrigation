@@ -14,15 +14,8 @@ import pandas as pd
 import tensorflow as tf
 from glob import glob
 import os
-#from matplotlib import pyplot as plt
-#%matplotlib inline
 import numpy as np
 from tqdm import tqdm
-#from google.colab import drive
-#import seaborn as sns
-#from matplotlib.cm import get_cmap
-#import folium
-#import gdal
 import rasterio
 import csv
 import json
@@ -37,18 +30,11 @@ print(tf.__version__)
 
 # ## Mount Google Drive and Set Paths
 
-# In[ ]:
+# In[3]:
 
 
-#from google.colab import drive
-#drive.mount('/content/gdrive')
-
-
-# In[ ]:
-
-
-base_path = '/content/gdrive/My Drive/Capstone Project'
-big_earth_path ='./BigEarthNet-v1.0/'
+# base_path = '/content/gdrive/My Drive/Capstone Project'
+big_earth_path ='/workspace/app/data/raw/BigEarthNet-v1.0/'
 
 
 # ## Create Symbolic Link(s)
@@ -57,19 +43,13 @@ big_earth_path ='./BigEarthNet-v1.0/'
 # In[ ]:
 
 
-get_ipython().system("ln -s './bigearthnet-models/' bemodels")
+os.system("ln -s '/workspace/app/data/raw/bigearthnet-models/' bemodels")
 
 
 # In[ ]:
 
 
-get_ipython().system('ls bemodels')
-
-
-# In[ ]:
-
-
-from bemodels import tensorflow_utils
+os.system('ls bemodels')
 
 
 # ## Process All of the BigEarthNet data
@@ -78,15 +58,22 @@ from bemodels import tensorflow_utils
 # ### Note: This processing takes a really long time. 
 # We need to determine if there is a better way to get this data ready for ingestion into our models.
 
+# In[4]:
+
+
+from bemodels import tensorflow_utils
+
+
 # In[ ]:
 
 
-with open('./bigearthnet-models/label_indices.json', 'rb') as f:
+
+with open('/workspace/app/data/raw/bigearthnet-models/label_indices.json', 'rb') as f:
     label_indices = json.load(f)
 
 root_folder = big_earth_path
-out_folder = './tfrecords'
-splits = glob(f'./bigearthnet-models/splits/train.csv')
+out_folder = '/workspace/app/data/processed'
+splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/train.csv')
 
 # Checks the existence of patch folders and populate the list of patch folder paths
 folder_path_list = []
@@ -94,40 +81,46 @@ if not os.path.exists(root_folder):
     print('ERROR: folder', root_folder, 'does not exist')
 
 try:
-  patch_names_list = []
-  split_names = []
-  for csv_file in splits:
-    patch_names_list.append([])
-    split_names.append(os.path.basename(csv_file).split('.')[0])
-    with open(csv_file, 'r') as fp:
-      csv_reader = csv.reader(fp, delimiter=',')
-      for row in csv_reader:
-        patch_names_list[-1].append(row[0].strip())    
+    patch_names_list = []
+    split_names = []
+    for csv_file in splits:
+        patch_names_list.append([])
+        split_names.append(os.path.basename(csv_file).split('.')[0])
+        with open(csv_file, 'r') as fp:
+            csv_reader = csv.reader(fp, delimiter=',')
+            for row in csv_reader:
+                patch_names_list[-1].append(row[0].strip())    
 except:
     print('ERROR: some csv files either do not exist or have been corrupted')
 
 tensorflow_utils.prep_tf_record_files(
     root_folder, out_folder, 
     split_names, patch_names_list, 
-    label_indices)
+    label_indices, False, True)
 
 
 # In[ ]:
 
 
-raw_dataset = tf.data.TFRecordDataset("./tfrecords/full_test.tfrecord")
+label_indices
+
+
+# In[ ]:
+
+
+raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_test.tfrecord")
 
 shards = 20
 
 for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"./tfrecords/test-part-{i}.tfrecord")
+    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/test-part-{i}.tfrecord")
     writer.write(raw_dataset.shard(shards, i))
 
 
 # In[ ]:
 
 
-raw_dataset = tf.data.TFRecordDataset("./tfrecords/full_train.tfrecord")
+raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_train.tfrecord")
 
 shards = 50
 
@@ -139,12 +132,12 @@ for i in range(shards):
 # In[ ]:
 
 
-raw_dataset = tf.data.TFRecordDataset("./tfrecords/full_val.tfrecord")
+raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed.tfrecord")
 
 shards = 20
 
 for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"./tfrecords/val-part-{i}.tfrecord")
+    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/val-part-{i}.tfrecord")
     writer.write(raw_dataset.shard(shards, i))
 
 

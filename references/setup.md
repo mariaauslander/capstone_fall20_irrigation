@@ -17,8 +17,10 @@ aws configure
 
 git clone https://github.com/Berkeley-Data/irrigation_detection.git
 
-cd irrigation_detection
+cd irrigation_detection/setup
 
+docker build -t irgapp -f tf22.docker . --no-cache
+=======
 # Build the docker image with tag 'irgapp'. If the build is successful, we should be able to see the final message 'Successfully tagged irgapp:latest'
 docker build -t irgapp -f ./setup/tf23.docker .
 
@@ -31,3 +33,12 @@ docker run --name tf --gpus all -it --rm -p 8888:8888 -v $HOME/.aws:/root/.aws:r
 # run jupyter notebook inside 
 jupyter notebook 
 ```
+
+##### Dataset
+1. [bigearthnet-s2 v1.0](http://bigearth.net/#downloads) 
+	1. ![[Pasted image 20210206105642.png]]
+2. [bigearthnet-model](https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models) 
+	1. download bigearthnet-model and unzip to /data/raw/bigearthnet-models 
+	```
+	curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/repository/master/archive.zip" -o "bigearthnet-models.zip" 
+	```
