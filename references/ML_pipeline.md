@@ -1,5 +1,10 @@
 
 
+# Dataset preparation
+#### Option 1: Using the raw data from S3 bucket
+1. Login to EC2 instance
+2. Create folder using 'mkdir s3_data'
+3. Run 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
@@ -15,7 +20,6 @@ tar -xvf data/raw/BigEarthNet-v1.0.tar.gz data/raw
 
 # download bigearthnet model
 curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
-
 ```
 
 3. BigEarthData Into TFRecords
