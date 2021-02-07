@@ -40,7 +40,7 @@ The results above show that we benefit from pretraining on the California data a
 	- EPOCHS is number of epochs to run (50 is default)
 	- BATCH is batch size (default is 32). 
 	- AUGMENT is True or False (whether to use data augmentation). (augment is not supported as of now) 
-	- For example, ```python train_supervised.py -a InceptionV3 -o InceptionV3 -e 50 -b 32 -g False```  
+	- For example, ```python train_supervised.py -a InceptionV3 -e 3 -b 32 -g False```  
 1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
                  
 ## Notes on Data Augmentation
