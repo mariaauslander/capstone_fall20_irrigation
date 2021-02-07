@@ -6,12 +6,6 @@
 - Test images:125866
 - Validation images:123723
 
-#### Option 1: Using the raw data from S3 bucket
-1. Login to EC2 instance
-2. Create folder using 'mkdir s3_data'
-3. Run 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
-Note: Will update the above steps based on the correct folder structure.
-
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
 
@@ -27,8 +21,8 @@ tar -xvf data/raw/BigEarthNet-v1.0.zip -C data/raw
 # download bigearthnet model
 curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
 ```
-
-3. BigEarthData Into TFRecords
+Note: The extracted files are also in S3 (s3://agcapbky/BigEarthNet/BigEarthNet-v1.0/). Don't download from S3 as it will take ~8 hours as there are more than 7 million files. Instead, use the above steps. Download from S3 only if the bigearth.net is not accessible using 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
+2. BigEarthData Into TFRecords
 	1. `src/data/preprocess_tfrecords.py` 
 	2. `src/data/preprocess_tfrecords_labeled.py`  (irrigation vs non-irrigation)
 	3. To preprocess the GeoTiff files that contain the Sentinel-2 MSI data comprising the BigEarthNet dataset into TFRecords files. It is based on the preprocessing scripts from the BigEarthNet repo, but has been updated to work in Colaboratory with Python3.7+ and TensorFlow 2.3.
@@ -36,6 +30,12 @@ curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/
 		1.  v1: s3://BigEarthNet-v1.0
 		2. bigearthnet-models/label_indices.json 
 
+Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). The data can be downloaded using 'aws s3 cp'.
+
+3. California Data
+California data is generated using Goole Earth Engine API. The data is available in S3. 
+- Preferred option: s3://agcapbky/CaliforniaData/raw/zip/CaliforniaData.zip  (2 GB)
+- Extracted files from CaliforniaData.zip: s3://agcapbky/CaliforniaData/raw/extracted/
 
 
 # Data Augmentation Pipeline Testing
