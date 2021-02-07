@@ -28,7 +28,7 @@ The results above show that we benefit from pretraining on the California data a
 ![tSNE California](reports/images/static_2048_tsne.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
-1. Follow the [setup](references/setup.md) and [data pipeline](references/data_pipeline.md) to prepare the docker container and datasets.
+1. Follow the [setup](references/setup.md) and [data pipeline](references/ML_pipeline.md) to prepare the docker container and datasets.
 2. Train the model using the following command. 
 	```
 	pip install --upgrade wandb

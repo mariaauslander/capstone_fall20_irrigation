@@ -5,12 +5,12 @@
 	- nvidia driver
 	- disk space (500GB+)
 - AWS
-	- [p3.2xlarge (or g4dn.2~4xlarge)](https://towardsdatascience.com/choosing-the-right-gpu-for-deep-learning-on-aws-d69c157d8c86) instance baed on [NVIDIA Deep Learning AMI](https://aws.amazon.com/marketplace/pp/NVIDIA-NVIDIA-Deep-Learning-AMI/B076K31M1S)Note: Select 'Oregon' region as p3 instances are not available in all the regions.
+	- p3.2xlarge instance baed on [NVIDIA Deep Learning AMI](https://aws.amazon.com/marketplace/pp/NVIDIA-NVIDIA-Deep-Learning-AMI/B076K31M1S)Note: Select 'Oregon' region as p3 instances are not available in all the regions.
 	- disk space (500GB+). 
 	- [TODO] other GPU instance needs to be tested and compared 
 
 #### Setup 
-using [nvidia containers](https://ngc.nvidia.com/catalog/containers/nvidia:tensorflow/tags) with [Tensorflow 20.09](https://docs.nvidia.com/deeplearning/frameworks/tensorflow-release-notes/#rel_20.09) 
+using [nvidia containers](https://ngc.nvidia.com/catalog/containers/nvidia:tensorflow/tags)
 ```
 # configure s3 access 
 aws configure 
@@ -19,9 +19,10 @@ git clone https://github.com/Berkeley-Data/irrigation_detection.git
 
 cd irrigation_detection/setup
 
-# use --no-cache parameter only if there has been change 
+docker build -t irgapp -f tf22.docker . --no-cache
+=======
 # Build the docker image with tag 'irgapp'. If the build is successful, we should be able to see the final message 'Successfully tagged irgapp:latest'
-docker build -t irgapp -f tf23.docker . --no-cache 
+docker build -t irgapp -f ./setup/tf23.docker .
 
 # (optional)Display the current docker images. We should be able to see 'irgapp'
 docker image ls
@@ -29,8 +30,11 @@ docker image ls
 # PWD should on the project root directory. 
 cd .. 
 
+# change the directory to the irrigation_detection
+cd irrigation_detection
+
 # Run the docker container and access its shell
-docker run --name tf --gpus all -it --rm -p 8888:8888 -v $PWD:/workspace/app -v /tmp:/tmp irgapp
+docker run --name tf --gpus all -it --rm -p 8888:8888 -v $HOME/.aws:/root/.aws:rw -v $PWD:/workspace/app -v /tmp:/tmp irgapp
 
 # run jupyter notebook inside 
 jupyter notebook 
@@ -44,3 +48,10 @@ jupyter notebook
 	```
 	curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/repository/master/archive.zip" -o "bigearthnet-models.zip" 
 	```
+3. EuroSat
+  * RGB
+    - curl "http://madm.dfki.de/files/sentinel/EuroSAT.zip" -o "./eurosat_rgb.zip"
+    - unzip eurosat_rgb.zip
+  * Full
+    - curl "http://madm.dfki.de/files/sentinel/EuroSATallBands.zip" -o "./eurosat_full.zip"
+    - unzip eurosat_full.zip
