@@ -50,7 +50,8 @@ print(tf.__version__)
 
 
 #base_path = '/content/gdrive/My Drive/Capstone Project'
-big_earth_path ='./BigEarthNet-v1.0/'
+#big_earth_path ='./BigEarthNet-v1.0/'
+big_earth_path ='/workspace/app/data/raw/BigEarthNet-v1.0/'
 
 
 # ## Create Symbolic Link(s)
@@ -59,13 +60,15 @@ big_earth_path ='./BigEarthNet-v1.0/'
 # In[5]:
 
 
-get_ipython().system("ln -s './bigearthnet-models/' bemodels")
+#get_ipython().system("ln -s './bigearthnet-models/' bemodels")
+os.system("ln -s '/workspace/app/data/raw/bigearthnet-models/' bemodels")
 
 
 # In[6]:
 
 
-get_ipython().system('ls bemodels')
+#get_ipython().system('ls bemodels')
+os.system('ls bemodels')
 
 
 # In[7]:
@@ -83,18 +86,21 @@ from bemodels import tensorflow_utils
 # In[98]:
 
 
-with open('./bigearthnet-models/label_indices.json', 'rb') as f:
+#with open('./bigearthnet-models/label_indices.json', 'rb') as f:
+with open('/workspace/app/data/raw/bigearthnet-models/label_indices.json', 'rb') as f:
     label_indices = json.load(f)
 
+#root_folder = big_earth_path
+#out_folder = './tfrecords'
+#splits = glob(f'./bigearthnet-models/splits/val.csv')
 root_folder = big_earth_path
-out_folder = './tfrecords'
-splits = glob(f'./bigearthnet-models/splits/val.csv')
+out_folder = '/workspace/app/data/processed'
+splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/val.csv')
 
 # Checks the existence of patch folders and populate the list of patch folder paths
 folder_path_list = []
 if not os.path.exists(root_folder):
     print('ERROR: folder', root_folder, 'does not exist')
-
 
 
 # In[99]:
@@ -108,7 +114,8 @@ for csv_file in splits:
     with open(csv_file, 'r') as fp:
         csv_reader = csv.reader(fp, delimiter=',')
         for row in csv_reader:
-            patch_names_list[-1].append(row[0].strip())    
+            patch_names_list[-1].append(row[0].strip())
+
 
 # tensorflow_utils.prep_tf_record_files(
 #     root_folder, out_folder, 
@@ -186,9 +193,15 @@ len(nonvy_examples)
 
 # In[17]:
 
+# New: This was added as the next code directly reads the csv and creates a dataframe
+pos_df = pd.DataFrame(irrigated_examples,columns=['file'])
+neg_df = pd.DataFrame(nonirrigated_examples,columns=['file'])
+pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
+neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
 
-pos_irr_df = pd.read_csv('./bigearthnet-models/splits/positive_train.csv')
-neg_irr_df = pd.read_csv('./bigearthnet-models/splits/negative_train.csv')
+
+pos_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
+neg_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
 
 
 # In[104]:
@@ -196,8 +209,8 @@ neg_irr_df = pd.read_csv('./bigearthnet-models/splits/negative_train.csv')
 
 pos_df = pd.DataFrame(vy_examples,columns=['file'])
 neg_df = pd.DataFrame(nonvy_examples,columns=['file'])
-pos_df.to_csv('./bigearthnet-models/splits/positive_vy_val.csv')
-neg_df.to_csv('./bigearthnet-models/splits/negative_vy_val.csv')
+pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_vy_val.csv')
+neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_vy_val.csv')
 
 
 # # Create Data sets for finetuning. Make total dataset size divisible by 32 or 64 for easy batching
@@ -323,13 +336,13 @@ len(neg_vy_df) *2
 balanced_df = pd.concat([pos_df, neg_vy_df])
 # Shuffle the examples
 balanced_df = balanced_df.sample(frac=1)
-balanced_df.to_csv(f'./bigearthnet-models/splits/final_balanced_val_vy.csv')
+balanced_df.to_csv(f'/workspace/app/data/raw/bigearthnet-models/splits/final_balanced_val_vy.csv')
 
 
 # In[109]:
 
 
-splits = glob(f'./bigearthnet-models/splits/final_balanced_val_vy.*')
+splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/final_balanced_val_vy.*')
 patch_names_list = []
 split_names = []
 for csv_file in splits:
