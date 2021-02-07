@@ -1,12 +1,12 @@
 # Deep Learning for Irrigation Detection
-## UC Berkeley - MIDS Capstone Fall 2020
-### Jade, Jay, Maria, Tom
-### Website: [https://people.ischool.berkeley.edu/~mariaauslander/index.html](https://people.ischool.berkeley.edu/~mariaauslander/index.html)
+## MIDS Capstone Spring 2021
+Extended Project From UC Berkeley - MIDS Capstone Fall 2020 (Jade, Jay, Maria, Tom)  [web sitesl](https://people.ischool.berkeley.edu/~mariaauslander/index.html) 
+Current team: Ernesto, Ken, Surya, Taeil (instructors: Puya, Alberto) 
 
 ## Overview
 The intent of our work is to develop a deep neural network that will be pre-trained on Sentinel-2 Multi-spectral Satellite Imagery (MSI) from the agricultural regions of California that can be finetuned with limited data to accurately predict irrigated lands. We will use unsupervised techniques inspired by [SimCLR](https://arxiv.org/pdf/2002.05709.pdf) and [SimCLRv2](https://arxiv.org/pdf/2006.10029.pdf) from Google. These techniques have been developed and demonstrated on normal 3-channel (i.e., RGB data) for ImageNet style imagery. The clear differences between MSI (10+ channels) and ImageNet images introduce some challenges in extrapolating the SimCLR techniques to MSI data. These challenges are predominantly focused around identifying effective augmentation techniques that can be implemented as part of the contrastive learning methodology employed by the SimCLR technique. In the original [SimCLR paper](https://arxiv.org/pdf/2002.05709.pdf) numerous evaluations of different augmentation techniques and magnitudes of augmentations were performed in order to determine the best subset of augmentations to use in order to maximize model accuracy with minimal labeled data. In order to do this they evaluated a range of augmentation techniques individually and evaluated the Top-1 Accuracy on ImageNet. The results are shown in the Figure below. There were two main conclusions from this study:  1. No single augmentation technique was sufficient to achieve the accuracy they were after (i.e., > 70%) and  2. color distortion appeared the most effective augmentation technique studied.
 
-![SimCLR Data Augmentation Evaluations](images/da_sensitivity.png)
+![SimCLR Data Augmentation Evaluations](reports/images/da_sensitivity.png)
 
 These studies took significant compute resources which are unavailable to our team, so we start our evaluations by evaluting only the data augmentation techniques determined to be most important based on the previous work on ImageNet while acknowledging differences in our imagery data. We look at geometric modifications such as rotations, flips, shifts and zooms, color distortion (some of the techniques are only applied to the RGB channels, others on all channels), and Gaussian blurring.
 
@@ -19,13 +19,13 @@ Separately we have also developed an independent dataset of Sentinel-2 satellite
 2. Color Distortion is quite effective and complements Geometric distortion
 3. Gaussian Blur has a small impact 
 
-![BigEarthNet SimCLR F1 Comparison](images/f1score_ca.png)
-![BigEarthNet SimCLR AUC Comparison](images/extensibility.png)
-![BigEarthNet SimCLR F1 Ablation](images/ablation.png)
+![BigEarthNet SimCLR F1 Comparison](reports/images/f1score_ca.png)
+![BigEarthNet SimCLR AUC Comparison](reports/images/extensibility.png)
+![BigEarthNet SimCLR F1 Ablation](reports/images/ablation.png)
 
 The results above show that we benefit from pretraining on the California data and extending these learned encoder weights to the BigEarthNet data. We have no labeled data for California, and thus cannot finetune on CA specifically. So the above study was performed to objectively show that our California pretraining was successful. In addition, we have generated a t-SNE grid plot for a subset of our California data. An example of this for 2,048 of our California images is shown below. There is also a notebook to create interactive bokeh grids included in the [notebooks folder](notebooks/). In the tSNE plot, images are first fed through the pretrained SimCLR neural encoder and projection head. The resultant 128 dimension array for each image is then passed into a tSNE algorithm to reduce the number of dimensions to two - or x and y coordinates. Each image is thus placed based on how close its encoded latent space vector is to those from other images. In this way we are showing the benefit of the pretraining. Images that have similar features are arranged more closely. For example in the top left of the plot, all of the images with predominantly heavily green vegetation are located. Conversely the more arid, mountainous images are located in the opposite, lower-right corner. Finally satellite images with more urban settings are located in the top center of the grid.
 
-![tSNE California](images/static_2048_tsne.png)
+![tSNE California](reports/images/static_2048_tsne.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
 1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
@@ -33,7 +33,8 @@ The results above show that we benefit from pretraining on the California data a
 `nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
 3. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
 4. The #6 command command will place you within the docker container. Train the model using the following:  
-`python3 supervised_classification.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT`
+```python3 train_supervised.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT```
+```python3 train_supervised.py -a InceptionV3 -o InceptionV3 -e 50 -b 32 -g True```
  where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
                  OUTPUT is a prefix for model file and results file
                  EPOCHS is number of epochs to run (50 is default)
@@ -87,12 +88,12 @@ where PRETRAIN is the filename of the pretrained simclr model (should reside in 
 ## California Data Set
 Sentinel-2 Level2A satellite imagery is gathered for the state of California using the Google Earth Engine API. The code to extract the MSI data and write to a TIF file can be found in the gather_california_data.ipynb notebook in the [notebooks directory](notebooks/). The data gathered was focused on agricultural regions of California - primarily the Central Valley, but also the souther region near Calexico as well. Patches of MSI data are gathed in 0.25 degree by 0.25 degree increments. This is roughly 600 square kilometers. In total 96 patches have been gathered, all for 2019 but for random months. This amounts to ~58,000 square kilometers, or roughly 14% the land area of California. The areas covered in our data set so far are shown in the image below.
 
-![California Data Coverage](images/ca_data_coverage.png)
+![California Data Coverage](reports/images/ca_data_coverage.png)
 
 Each image patch is approximately 3458 x 2784 pixels. For consistency with the Big Earth Net data these patches are then tiled into 120 x 120 images, resulting in >600 image tiles per patch, and approximately 64,000 total images for training our California-based SimCLR model. Images are checked to ensure there are no NaNs. If NaNs exist anywhere in the image, the image is thrown out. In some cases when gathering the satellite imagery, it was notice that large swaths of a region were unavailable (likely due to continuous cloud cover). In those cases, an attempt was made to find a month that was more fully available. Each patch was visually inspected to ensure that data was acceptable. This quality assurance was perfomed using the [ca_data_qa notebook](CaliforniaData/) in the CaliforniaData directory. An example of this visual quality assurance is provided below, where the agricultural index for 32 contiguous patches are shown. As discussed [here](https://gisgeography.com/sentinel-2-bands-combinations/)
 The agriculture band combination uses SWIR-1 (B11), near-infrared (B8), and blue (B2). It’s mostly used to monitor the health of crops because of how it uses short-wave and near-infrared. Both these bands are particularly good at highlighting dense vegetation which appears as dark green. The different shadings by patch are an artifact of using the same scaling factor to adjust the reflectance of each image prior to plotting. This and the fact that different patches represent different months (with different vegetation levels) make it relatively easy to see where patch boundaries occur.
 
-![California Image Check](images/california_ag.png)
+![California Image Check](reports/images/california_ag.png)
 
 
 #### Project Organization

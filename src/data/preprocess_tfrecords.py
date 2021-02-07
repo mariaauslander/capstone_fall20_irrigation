@@ -73,7 +73,7 @@ with open('/workspace/app/data/raw/bigearthnet-models/label_indices.json', 'rb')
 
 root_folder = big_earth_path
 out_folder = '/workspace/app/data/processed'
-splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/train.csv')
+splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/*.csv')
 
 # Checks the existence of patch folders and populate the list of patch folder paths
 folder_path_list = []
@@ -104,44 +104,33 @@ tensorflow_utils.prep_tf_record_files(
 
 label_indices
 
+# [todo] not sure what the code below is for.
 
-# In[ ]:
+# raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_test.tfrecord")
+#
+# shards = 20
+#
+# for i in range(shards):
+#     writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/test-part-{i}.tfrecord")
+#     writer.write(raw_dataset.shard(shards, i))
+#
+#
+# raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_train.tfrecord")
+#
+# shards = 50
+#
+# for i in range(shards):
+#     writer = tf.data.experimental.TFRecordWriter(f"./tfrecords/train-part-{i}.tfrecord")
+#     writer.write(raw_dataset.shard(shards, i))
+#
+# raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed.tfrecord")
+#
+# shards = 20
+#
+# for i in range(shards):
+#     writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/val-part-{i}.tfrecord")
+#     writer.write(raw_dataset.shard(shards, i))
 
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_test.tfrecord")
-
-shards = 20
-
-for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/test-part-{i}.tfrecord")
-    writer.write(raw_dataset.shard(shards, i))
-
-
-# In[ ]:
-
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_train.tfrecord")
-
-shards = 50
-
-for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"./tfrecords/train-part-{i}.tfrecord")
-    writer.write(raw_dataset.shard(shards, i))
-
-
-# In[ ]:
-
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed.tfrecord")
-
-shards = 20
-
-for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/val-part-{i}.tfrecord")
-    writer.write(raw_dataset.shard(shards, i))
-
-
-# In[ ]:
 
 
 
