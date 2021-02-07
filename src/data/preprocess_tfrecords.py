@@ -36,6 +36,7 @@ print(tf.__version__)
 # base_path = '/content/gdrive/My Drive/Capstone Project'
 big_earth_path ='/workspace/app/data/raw/BigEarthNet-v1.0/'
 
+big_earth_models_folder ='/workspace/app/data/raw/bigearthnet-models/'
 
 # ## Create Symbolic Link(s)
 # Set up a symbolic link to allow for easy Python module imports. Then check to make sure the link works (it is a Unix link so check from shell)
@@ -68,80 +69,67 @@ from bemodels import tensorflow_utils
 
 
 
-with open('/workspace/app/data/raw/bigearthnet-models/label_indices.json', 'rb') as f:
+with open(big_earth_models_folder+'label_indices.json', 'rb') as f:
     label_indices = json.load(f)
 
 root_folder = big_earth_path
 out_folder = '/workspace/app/data/processed'
-splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/train.csv')
+splits = glob(f'{big_earth_models_folder}splits/train.csv')
 
 # Checks the existence of patch folders and populate the list of patch folder paths
-folder_path_list = []
+csv_file_path_list = ['splits/train.csv', 'splits/test.csv', 'splits/val.csv']
 if not os.path.exists(root_folder):
     print('ERROR: folder', root_folder, 'does not exist')
 
 try:
-    patch_names_list = []
-    split_names = []
-    for csv_file in splits:
-        patch_names_list.append([])
-        split_names.append(os.path.basename(csv_file).split('.')[0])
-        with open(csv_file, 'r') as fp:
-            csv_reader = csv.reader(fp, delimiter=',')
-            for row in csv_reader:
-                patch_names_list[-1].append(row[0].strip())    
+    for csv_file in csv_file_path_list:
+        splits = glob(f"{big_earth_models_folder}{csv_file}")
+        patch_names_list = []
+        split_names = []
+        for csv_file in splits:
+            patch_names_list.append([])
+            split_names.append(os.path.basename(csv_file).split('.')[0])
+            with open(csv_file, 'r') as fp:
+                csv_reader = csv.reader(fp, delimiter=',')
+                for row in csv_reader:
+                    patch_names_list[-1].append(row[0].strip())
+        tensorflow_utils.prep_tf_record_files(
+            root_folder, out_folder,
+            split_names, patch_names_list,
+            label_indices, False, True)
 except:
     print('ERROR: some csv files either do not exist or have been corrupted')
-
-tensorflow_utils.prep_tf_record_files(
-    root_folder, out_folder, 
-    split_names, patch_names_list, 
-    label_indices, False, True)
-
-
-# In[ ]:
 
 
 label_indices
 
 
-# In[ ]:
-
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_test.tfrecord")
-
-shards = 20
-
-for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/test-part-{i}.tfrecord")
-    writer.write(raw_dataset.shard(shards, i))
-
-
-# In[ ]:
-
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed/full_train.tfrecord")
+# Shard the Train data
+raw_dataset = tf.data.TFRecordDataset(out_folder+"/train.tfrecord")
 
 shards = 50
 
 for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"./tfrecords/train-part-{i}.tfrecord")
+    writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/train-part-{i}.tfrecord")
     writer.write(raw_dataset.shard(shards, i))
 
-
-# In[ ]:
-
-
-raw_dataset = tf.data.TFRecordDataset("/workspace/app/data/processed.tfrecord")
+# Shard the Test data
+raw_dataset = tf.data.TFRecordDataset(out_folder+"/test.tfrecord")
 
 shards = 20
 
 for i in range(shards):
-    writer = tf.data.experimental.TFRecordWriter(f"/workspace/app/data/processed/val-part-{i}.tfrecord")
+    writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/test-part-{i}.tfrecord")
     writer.write(raw_dataset.shard(shards, i))
 
+# Shard the Val data
+raw_dataset = tf.data.TFRecordDataset(out_folder+"/val.tfrecord")
 
-# In[ ]:
+shards = 20
+
+for i in range(shards):
+    writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/val-part-{i}.tfrecord")
+    writer.write(raw_dataset.shard(shards, i))
 
 
 
