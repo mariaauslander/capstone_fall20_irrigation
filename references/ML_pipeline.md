@@ -1,10 +1,16 @@
 
 
 # Dataset preparation
+#### BigEarthNet data splits:
+- Train images:269695
+- Test images:125866
+- Validation images:123723
+
 #### Option 1: Using the raw data from S3 bucket
 1. Login to EC2 instance
 2. Create folder using 'mkdir s3_data'
 3. Run 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
+Note: Will update the above steps based on the correct folder structure.
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
