@@ -48,7 +48,6 @@ METRICS = [
     tf.keras.metrics.AUC(name='auc'),
 ]
 
-
 def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None):
     if output_bias is not None:
         output_bias = tf.keras.initializers.Constant(output_bias)
@@ -139,13 +138,21 @@ def _random_apply(func, x, p):
 def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet50, pretrain=False, augment=False):
 
     # 1. Start a W&B run
-    wandb.init(project="irrigation_detection")
+    name = f"BE super. full {architecture} b{BATCH_SIZE} e{epochs}"
+    # name = f"{prefix}{architecture}_b{BATCH_SIZE}"
+    wandb.init(project="irrigation_detection", name=name)
     wandb.config.epochs = epochs
     wandb.config.batch_size = BATCH_SIZE
     # wandb.config.learning_rate = 0.001
     wandb.config.architecture = architecture
 
-    # name = f"{prefix}{architecture}_b{BATCH_SIZE}
+    arch_dict = {'ResNet50': ResNet50,
+                 'ResNet101V2': ResNet101V2,
+                 'Xception': Xception,
+                 'InceptionV3': InceptionV3}
+
+    architecture = arch_dict[args.arch]
+
     # print(50 * "*")
     # print(f"Running model: {name}")
     # print(50 * "=")
@@ -269,11 +276,6 @@ if __name__ == '__main__':
                         help="whether to augment the training data")
     args = parser.parse_args()
 
-    arch_dict = {'ResNet50': ResNet50,
-                 'ResNet101V2': ResNet101V2,
-                 'Xception': Xception,
-                 'InceptionV3': InceptionV3}
-
     AUGMENT = False
     # if args.augment == 'True':
     #     AUGMENT = True
@@ -282,7 +284,7 @@ if __name__ == '__main__':
               BATCH_SIZE=args.BATCH_SIZE,
               epochs=args.EPOCHS,
               weights=False,
-              architecture=arch_dict[args.arch],
+              architecture=args.arch,
               pretrain=False,
               augment=AUGMENT)
 
