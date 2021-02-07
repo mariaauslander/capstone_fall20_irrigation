@@ -19,7 +19,7 @@ curl http://bigearth.net/downloads/BigEarthNet-S2-v1.0.tar.gz -o data/raw/BigEar
 tar -xvf data/raw/BigEarthNet-v1.0.tar.gz data/raw
 
 # download bigearthnet model
-curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
+# curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
 ```
 
 3. BigEarthData Into TFRecords

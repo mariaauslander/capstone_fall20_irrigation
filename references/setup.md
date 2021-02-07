@@ -10,7 +10,7 @@
 	- [TODO] other GPU instance needs to be tested and compared 
 
 #### Setup 
-using [nvidia containers](https://ngc.nvidia.com/catalog/containers/nvidia:tensorflow/tags)
+using [nvidia containers](https://ngc.nvidia.com/catalog/containers/nvidia:tensorflow/tags) with [Tensorflow 20.09](https://docs.nvidia.com/deeplearning/frameworks/tensorflow-release-notes/#rel_20.09) 
 ```
 # configure s3 access 
 aws configure 
