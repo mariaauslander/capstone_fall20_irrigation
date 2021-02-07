@@ -28,18 +28,20 @@ The results above show that we benefit from pretraining on the California data a
 ![tSNE California](reports/images/static_2048_tsne.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
-1. Follow the setup instructions in the Readme in the Setup Folder to install the docker container.
-2. Run the docker container interactively passing in the mounted files from cloud storage:  
-`nvidia-docker run -it --rm -v /mnt/irrigation_data:/data irgapp bash`
-3. From within the docker container, copy the necessary clouds from cloud storage to the `/root/capstone_fall20_irrigation/BigEarthData/tfrecords` directory
-4. The #6 command command will place you within the docker container. Train the model using the following:  
-```python3 train_supervised.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT```
-```python3 train_supervised.py -a InceptionV3 -o InceptionV3 -e 50 -b 32 -g True```
- where ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
-                 OUTPUT is a prefix for model file and results file
-                 EPOCHS is number of epochs to run (50 is default)
-                 BATCH is batch size (default is 32). 
-                 AUGMENT is True or False (whether to use data augmentation).
+1. Follow the [setup](references/setup.md) and [data pipeline](references/data_pipeline.md) to prepare the docker container and datasets.
+2. Train the model using the following command. 
+	```
+	pip install --upgrade wandb
+	wandb login e96802b17d8e833421348df053b41a538a810177
+	python train_supervised.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT
+	``` 
+	- ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
+	- OUTPUT is a prefix
+	- EPOCHS is number of epochs to run (50 is default)
+	- BATCH is batch size (default is 32). 
+	- AUGMENT is True or False (whether to use data augmentation). (augment is not supported as of now) 
+	- For example, ```python train_supervised.py -a InceptionV3 -o InceptionV3 -e 50 -b 32 -g False```  
+1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
                  
 ## Notes on Data Augmentation
 Data augmentation is tested on our supervised model to ensure that:
