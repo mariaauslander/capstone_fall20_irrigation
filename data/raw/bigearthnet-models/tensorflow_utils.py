@@ -43,7 +43,7 @@ def prep_example(bands, original_labels, original_labels_multi_hot, patch_name):
                     'patch_name': tf.train.Feature(
                         bytes_list=tf.train.BytesList(value=[patch_name.encode('utf-8')]))
                 }))
-    
+
 def create_split(root_folder, patch_names, TFRecord_writer, label_indices, GDAL_EXISTED, RASTERIO_EXISTED):
     if GDAL_EXISTED:
         import gdal
@@ -93,7 +93,7 @@ def prep_tf_record_files(root_folder, out_folder, split_names, patch_names_list,
         writer_list = []
         for split_name in split_names:
             writer_list.append(
-                    tf.python_io.TFRecordWriter(os.path.join(
+                    tf.compat.v1.python_io.TFRecordWriter(os.path.join(
                         out_folder, split_name + '.tfrecord'))
                 )
     except:
@@ -111,4 +111,6 @@ def prep_tf_record_files(root_folder, out_folder, split_names, patch_names_list,
             RASTERIO_EXISTED, 
             )
         writer_list[split_idx].close()
-        
+
+
+

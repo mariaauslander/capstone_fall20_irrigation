@@ -3,7 +3,7 @@
 
 # This script creates splits with TFRecord files from BigEarthNet 
 # image patches based on csv files that contain patch names.
-# 
+#
 # prep_splits.py --help can be used to learn how to use this script.
 #
 # Author: Gencer Sumbul, http://www.user.tu-berlin.de/gencersumbul/
