@@ -5,8 +5,20 @@
 # Integrating and Exploring the Combined MSI Dataset for California
 
 #### Data Processing 
-1. BigEarthNet dataset (Surya to add more details)
-2. BigEarthData Into TFRecords
+1. BigEarthNet dataset 
+```
+# download 66GB package 
+curl http://bigearth.net/downloads/BigEarthNet-S2-v1.0.tar.gz -o data/raw/BigEarthNet-v1.0.zip
+
+# extract 
+tar -xvf data/raw/BigEarthNet-v1.0.tar.gz data/raw
+
+# download bigearthnet model
+curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
+
+```
+
+3. BigEarthData Into TFRecords
 	1. `src/data/preprocess_tfrecords.py` 
 	2. `src/data/preprocess_tfrecords_labeled.py`  (irrigation vs non-irrigation)
 	3. To preprocess the GeoTiff files that contain the Sentinel-2 MSI data comprising the BigEarthNet dataset into TFRecords files. It is based on the preprocessing scripts from the BigEarthNet repo, but has been updated to work in Colaboratory with Python3.7+ and TensorFlow 2.3.
