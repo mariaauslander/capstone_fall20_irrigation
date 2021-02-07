@@ -27,6 +27,9 @@ docker build -t irgapp -f ./setup/tf23.docker .
 # (optional)Display the current docker images. We should be able to see 'irgapp'
 docker image ls
 
+# change the directory to the irrigation_detection
+cd irrigation_detection
+
 # Run the docker container and access its shell
 docker run --name tf --gpus all -it --rm -p 8888:8888 -v $HOME/.aws:/root/.aws:rw -v $PWD:/workspace/app -v /tmp:/tmp irgapp
 
