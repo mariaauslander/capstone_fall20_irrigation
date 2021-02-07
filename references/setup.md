@@ -45,3 +45,10 @@ jupyter notebook
 	```
 	curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/repository/master/archive.zip" -o "bigearthnet-models.zip" 
 	```
+3. EuroSat
+  * RGB
+    - curl "http://madm.dfki.de/files/sentinel/EuroSAT.zip" -o "./eurosat_rgb.zip"
+    - unzip eurosat_rgb.zip
+  * Full
+    - curl "http://madm.dfki.de/files/sentinel/EuroSATallBands.zip" -o "./eurosat_full.zip"
+    - unzip eurosat_full.zip
