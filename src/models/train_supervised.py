@@ -146,8 +146,9 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     len_test_records = 125866
 
     # 1. Start a W&B run
-    name = f"BE supervised {architecture} b{batch_size} e{epochs}"
-    wandb.init(project="irrigation_detection", name=name)
+    # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
+    # wandb.init(project="irrigation_detection", name=name)
+    wandb.init(project="irrigation_detection")
     wandb.config.epochs = epochs
     wandb.config.batch_size = batch_size
     # wandb.config.learning_rate = 0.001
