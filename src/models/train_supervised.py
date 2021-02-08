@@ -191,18 +191,27 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
 
     test_data = get_validation_dataset(test_filenames, batch_size=BATCH_SIZE)
 
-    len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"train set: {len_train_records}")
+    # len_train_records = 4384*2
+    # len_val_records = 4384
+    # len_test_records = 4384
 
-    len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
+    # previous team code was running on a lot smaller set
+    len_train_records = 269695
+    wandb.config.update({'dataset.train': f'{len_train_records}'})
+    len_val_records = 123723
+    wandb.config.update({'dataset.val': f'{len_val_records}'})
+    len_test_records = 125866
+    wandb.config.update({'dataset.test': f'{len_test_records}'})
+
+    # counting on the fly takes hours if not days
+    # len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
     print(f"val set: {len_val_records}")
 
-    len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"test set: {len_test_records}")
+    # len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"train set: {len_train_records}")
 
-    # len_val_records = 4384
-    # len_train_records = 128
-    # len_train_records = 9942
+    # len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"test set: {len_test_records}")
 
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE
@@ -243,7 +252,7 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
                             steps_per_epoch=steps_per_epoch,
                             validation_data=val_data,
                             validation_steps=validation_steps,
-                            callbacks=[time_callback, early_stop],
+                            callbacks=[time_callback, early_stop, WandbCallback()],
                             class_weight=class_weight)
         # times = time_callback.times
         # df = pd.DataFrame(history.history)
@@ -255,8 +264,8 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
             steps_per_epoch=steps_per_epoch,
             validation_data=val_data,
             validation_steps=validation_steps,
-            callbacks=[WandbCallback()],
-            # callbacks=[time_callback, early_stop, WandbCallback],
+            # callbacks=[WandbCallback()],
+            callbacks=[time_callback, early_stop, WandbCallback()],
             class_weight=class_weight)
         # times = time_callback.times
         # df = pd.DataFrame(history.history)
@@ -265,14 +274,30 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
     # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
+    # test_steps = len_test_records // BATCH_SIZE
+
+    # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    # perf = model.evaluate(test_data, batch_size = BATCH_SIZE, steps=test_steps)
+    # wandb.run.summary["test_loss"] = perf[0]
+    # wandb.run.summary["test_tp"] = perf[1]
+    # wandb.run.summary["test_fp"] = perf[2]
+    # wandb.run.summary["test_tn"] = perf[3]
+    # wandb.run.summary["test_fn"] = perf[4]
+    # wandb.run.summary["test_accuracy"] = perf[5]
+    # wandb.run.summary["test_precision"] = perf[6]
+    # wandb.run.summary["test_recall"] = perf[7]
+    # wandb.run.summary["test_auc"] = perf[8]
+
+    # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
+    # callbacks=[WandbCallback()]
+    #print('test_loss:', loss, 'test_accuracy:', acc)
+
+    # wandb.run.summary["test"] = perf
+    # print(perf)
+    # wandb.run.summary["test_loss"] = loss
+
     # Save model to wandb
     model.save(os.path.join(wandb.run.dir, "model.h5"))
-
-    test_steps = len_test_records // BATCH_SIZE
-    loss, acc = model.evaluate(test_data, batch_size=BATCH_SIZE, steps=test_steps) # callbacks=[WandbCallback()]
-    wandb.run.summary["test_accuracy"] = acc
-    wandb.run.summary["test_loss"] = loss
-    print('loss:', loss, 'acc:', acc)
 
     return
     # return df
