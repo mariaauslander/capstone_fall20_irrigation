@@ -19,10 +19,8 @@ git clone https://github.com/Berkeley-Data/irrigation_detection.git
 
 cd irrigation_detection/setup
 
-docker build -t irgapp -f tf22.docker . --no-cache
-=======
 # Build the docker image with tag 'irgapp'. If the build is successful, we should be able to see the final message 'Successfully tagged irgapp:latest'
-docker build -t irgapp -f ./setup/tf23.docker .
+docker build -t irgapp -f tf23.docker . --no-cache
 
 # (optional)Display the current docker images. We should be able to see 'irgapp'
 docker image ls
@@ -30,11 +28,8 @@ docker image ls
 # PWD should on the project root directory. 
 cd .. 
 
-# change the directory to the irrigation_detection
-cd irrigation_detection
-
 # Run the docker container and access its shell
-docker run --name tf --gpus all -it --rm -p 8888:8888 -v $HOME/.aws:/root/.aws:rw -v $PWD:/workspace/app -v /tmp:/tmp irgapp
+docker run --name tf --gpus all -it --rm -p 8888:8888 -v $PWD:/workspace/app -v /tmp:/tmp irgapp
 
 # run jupyter notebook inside 
 jupyter notebook 

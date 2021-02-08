@@ -191,14 +191,14 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
 
     test_data = get_validation_dataset(test_filenames, batch_size=BATCH_SIZE)
 
-    len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"train set: {len_train_records}")
+    len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"test set: {len_test_records}")
 
     len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
     print(f"val set: {len_val_records}")
 
-    len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"test set: {len_test_records}")
+    len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"train set: {len_train_records}")
 
     # len_val_records = 4384
     # len_train_records = 128
