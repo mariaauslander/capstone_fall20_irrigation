@@ -176,6 +176,8 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
     # validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
     training_filenames = f'{TFR_PATH}/train.tfrecord'
     validation_filenames = f'{TFR_PATH}/val.tfrecord'
+    test_filenames = f'{TFR_PATH}/test.tfrecord'
+
 
     training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
     #     train_df = pd.read_pickle(training_filenames)
@@ -187,9 +189,21 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
 
     val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
 
-    len_val_records = 4384
-    len_train_records = 128
-    #     len_train_records = 9942
+    test_data = get_validation_dataset(test_filenames, batch_size=BATCH_SIZE)
+
+    len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"train set: {len_train_records}")
+
+    len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"val set: {len_val_records}")
+
+    len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
+    print(f"test set: {len_test_records}")
+
+    # len_val_records = 4384
+    # len_train_records = 128
+    # len_train_records = 9942
+
     steps_per_epoch = len_train_records // BATCH_SIZE
     validation_steps = len_val_records // BATCH_SIZE
 
@@ -253,6 +267,12 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
 
     # Save model to wandb
     model.save(os.path.join(wandb.run.dir, "model.h5"))
+
+    test_steps = len_test_records // BATCH_SIZE
+    loss, acc = model.evaluate(test_data, batch_size=BATCH_SIZE, steps=test_steps) # callbacks=[WandbCallback()]
+    wandb.run.summary["test_accuracy"] = acc
+    wandb.run.summary["test_loss"] = loss
+    print('loss:', loss, 'acc:', acc)
 
     return
     # return df
