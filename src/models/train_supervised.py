@@ -135,14 +135,14 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False):
+def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10):
 
     # previous team code was running on a lot smaller set
     # len_train_records = 4384*2
     # len_val_records = 4384
     # len_test_records = 4384
-    len_train_records = 269695
-    len_val_records = 123723
+    len_train_records = (269695 // 100) * percent
+    len_val_records = (123723 // 100) * percent
     len_test_records = 125866
 
     # 1. Start a W&B run
@@ -153,6 +153,7 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     wandb.config.batch_size = batch_size
     # wandb.config.learning_rate = 0.001
     wandb.config.architecture = architecture
+    wandb.config.update({'dataset.percent': f'{percent}'})
     wandb.config.update({'dataset.train': f'{len_train_records}'})
     wandb.config.update({'dataset.val': f'{len_val_records}'})
     wandb.config.update({'dataset.test': f'{len_test_records}'})
@@ -167,7 +168,7 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     # print(50 * "*")
     # print(f"Running model: {name}")
     # print(50 * "=")
-    # print(f"Batch Size: {BATCH_SIZE}")
+    # print(f"Batch Size: {batch_size}")
     if weights:
         neg = 38400 - 984
         pos = 984
@@ -273,11 +274,11 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
-    test_steps = len_test_records // BATCH_SIZE
+    test_steps = len_test_records // batch_size
 
     # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
     # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
-    perf = model.evaluate(test_data, batch_size = BATCH_SIZE, steps=test_steps)
+    perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps)
     wandb.run.summary["test_loss"] = perf[0]
     wandb.run.summary["test_tp"] = perf[1]
     wandb.run.summary["test_fp"] = perf[2]
@@ -303,25 +304,28 @@ if __name__ == '__main__':
                         help='Class of Model Architecture to use for classification')
     parser.add_argument('-o', '--output', type=str,
                         help='Output File Prefix for model file and dataframe')
-    parser.add_argument('-b', '--BATCH_SIZE', default=32, type=int,
+    parser.add_argument('-b', '--batch_size', default=32, type=int,
                         help="batch size to use during training and validation")
-    parser.add_argument('-e', '--EPOCHS', default=50, type=int,
+    parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
     parser.add_argument('-w', '--weights', default=False, type=bool,
                         help="whether to use weights")
     parser.add_argument('-g', '--augment', default="False", type=str, choices=['True', 'False'],
                         help="whether to augment the training data")
+    parser.add_argument('-p', '--percent', default=10, type=int,
+                        help="portion of datasets to be used for training. 1~100")
     args = parser.parse_args()
 
-    AUGMENT = False
+    augment = False
     # if args.augment == 'True':
     #     AUGMENT = True
 
     run_model(args.output,
-              batch_size=args.BATCH_SIZE,
-              epochs=args.EPOCHS,
+              batch_size=args.batch_size,
+              epochs=args.epochs,
               weights=False,
               architecture=args.arch,
               pretrain=False,
-              augment=AUGMENT)
+              augment=augment,
+              percent=args.percent)
 
