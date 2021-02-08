@@ -27,6 +27,9 @@ docker build -t irgapp -f ./setup/tf23.docker .
 # (optional)Display the current docker images. We should be able to see 'irgapp'
 docker image ls
 
+# PWD should on the project root directory. 
+cd .. 
+
 # change the directory to the irrigation_detection
 cd irrigation_detection
 
