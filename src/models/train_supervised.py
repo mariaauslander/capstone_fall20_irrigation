@@ -135,16 +135,26 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResNet50, pretrain=False, augment=False):
+def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False):
+
+    # previous team code was running on a lot smaller set
+    # len_train_records = 4384*2
+    # len_val_records = 4384
+    # len_test_records = 4384
+    len_train_records = 269695
+    len_val_records = 123723
+    len_test_records = 125866
 
     # 1. Start a W&B run
-    name = f"BE super. full {architecture} b{BATCH_SIZE} e{epochs}"
-    # name = f"{prefix}{architecture}_b{BATCH_SIZE}"
+    name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     wandb.init(project="irrigation_detection", name=name)
     wandb.config.epochs = epochs
-    wandb.config.batch_size = BATCH_SIZE
+    wandb.config.batch_size = batch_size
     # wandb.config.learning_rate = 0.001
     wandb.config.architecture = architecture
+    wandb.config.update({'dataset.train': f'{len_train_records}'})
+    wandb.config.update({'dataset.val': f'{len_val_records}'})
+    wandb.config.update({'dataset.test': f'{len_test_records}'})
 
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2': ResNet101V2,
@@ -179,7 +189,7 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
     test_filenames = f'{TFR_PATH}/test.tfrecord'
 
 
-    training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
+    training_data = get_training_dataset(training_filenames, batch_size=batch_size)
     #     train_df = pd.read_pickle(training_filenames)
     #     train_X = train_df.X.values
     #     train_y = train_df.y.values
@@ -187,34 +197,22 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
     #     train_X = np.stack(train_X)
     #     train_y = np.stack(train_y)
 
-    val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
+    val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
 
-    test_data = get_validation_dataset(test_filenames, batch_size=BATCH_SIZE)
-
-    # len_train_records = 4384*2
-    # len_val_records = 4384
-    # len_test_records = 4384
-
-    # previous team code was running on a lot smaller set
-    len_train_records = 269695
-    wandb.config.update({'dataset.train': f'{len_train_records}'})
-    len_val_records = 123723
-    wandb.config.update({'dataset.val': f'{len_val_records}'})
-    len_test_records = 125866
-    wandb.config.update({'dataset.test': f'{len_test_records}'})
+    test_data = get_validation_dataset(test_filenames, batch_size=batch_size)
 
     # counting on the fly takes hours if not days
     # len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"val set: {len_val_records}")
+    # print(f"val set: {len_val_records}")
 
     # len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"train set: {len_train_records}")
+    # print(f"train set: {len_train_records}")
 
     # len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
-    print(f"test set: {len_test_records}")
+    # print(f"test set: {len_test_records}")
 
-    steps_per_epoch = len_train_records // BATCH_SIZE
-    validation_steps = len_val_records // BATCH_SIZE
+    steps_per_epoch = len_train_records // batch_size
+    validation_steps = len_val_records // batch_size
 
     # Use an early stopping callback and our timing callback
     early_stop = tf.keras.callbacks.EarlyStopping(
@@ -245,7 +243,7 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
             vertical_flip=True,
             zoom_range=0.20,
             preprocessing_function=augfunc)
-        aug_data = datagen.flow(train_X, train_y, batch_size=BATCH_SIZE, shuffle=True)
+        aug_data = datagen.flow(train_X, train_y, batch_size=batch_size, shuffle=True)
 
         history = model.fit(aug_data,
                             epochs=epochs,
@@ -274,38 +272,31 @@ def run_model(prefix, BATCH_SIZE=32, epochs=50, weights=False, architecture=ResN
     # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
-    # test_steps = len_test_records // BATCH_SIZE
+    test_steps = len_test_records // BATCH_SIZE
 
     # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-    # perf = model.evaluate(test_data, batch_size = BATCH_SIZE, steps=test_steps)
-    # wandb.run.summary["test_loss"] = perf[0]
-    # wandb.run.summary["test_tp"] = perf[1]
-    # wandb.run.summary["test_fp"] = perf[2]
-    # wandb.run.summary["test_tn"] = perf[3]
-    # wandb.run.summary["test_fn"] = perf[4]
-    # wandb.run.summary["test_accuracy"] = perf[5]
-    # wandb.run.summary["test_precision"] = perf[6]
-    # wandb.run.summary["test_recall"] = perf[7]
-    # wandb.run.summary["test_auc"] = perf[8]
-
     # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
-    # callbacks=[WandbCallback()]
-    #print('test_loss:', loss, 'test_accuracy:', acc)
+    perf = model.evaluate(test_data, batch_size = BATCH_SIZE, steps=test_steps)
+    wandb.run.summary["test_loss"] = perf[0]
+    wandb.run.summary["test_tp"] = perf[1]
+    wandb.run.summary["test_fp"] = perf[2]
+    wandb.run.summary["test_tn"] = perf[3]
+    wandb.run.summary["test_fn"] = perf[4]
+    wandb.run.summary["test_accuracy"] = perf[5]
+    wandb.run.summary["test_precision"] = perf[6]
+    wandb.run.summary["test_recall"] = perf[7]
+    wandb.run.summary["test_auc"] = perf[8]
+    wandb.run.summary["test_perf"] = perf
 
-    # wandb.run.summary["test"] = perf
     # print(perf)
-    # wandb.run.summary["test_loss"] = loss
-
     # Save model to wandb
     model.save(os.path.join(wandb.run.dir, "model.h5"))
 
     return
     # return df
 
-
 if __name__ == '__main__':
 
-    print('In main function')
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
     parser.add_argument('-a', '--arch', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
@@ -326,7 +317,7 @@ if __name__ == '__main__':
     #     AUGMENT = True
 
     run_model(args.output,
-              BATCH_SIZE=args.BATCH_SIZE,
+              batch_size=args.BATCH_SIZE,
               epochs=args.EPOCHS,
               weights=False,
               architecture=args.arch,
