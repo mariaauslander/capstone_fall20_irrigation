@@ -21,7 +21,12 @@ tar -xvf data/raw/BigEarthNet-v1.0.zip -C data/raw
 # download bigearthnet model
 curl "https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2\_43-classes\_models/repository/master/archive.zip" -o "bigearthnet-models.zip"
 ```
-Note: The extracted files are also in S3 (s3://agcapbky/BigEarthNet/BigEarthNet-v1.0/). Don't download from S3 as it will take ~8 hours as there are more than 7 million files. Instead, use the above steps. Download from S3 only if the bigearth.net is not accessible using 'aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive'
+Note: The extracted files are also in S3 (s3://agcapbky/BigEarthNet/BigEarthNet-v1.0/). 
+Don't download from S3 as it will take ~8 hours as there are more than 7 million files. 
+Instead, use the above steps. Download from S3 only if the bigearth.net is not accessible using:
+```
+aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive
+```
 2. BigEarthData Into TFRecords
 	1. `src/data/preprocess_tfrecords.py` 
 	2. `src/data/preprocess_tfrecords_labeled.py`  (irrigation vs non-irrigation)
@@ -30,31 +35,44 @@ Note: The extracted files are also in S3 (s3://agcapbky/BigEarthNet/BigEarthNet-
 		1.  v1: s3://BigEarthNet-v1.0
 		2. bigearthnet-models/label_indices.json 
 
-Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). The data can be downloaded using 'aws s3 cp'.
-
+Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). The data can be downloaded using 
+```
+aws s3 cp
+```
+**Note**: Instead of the above 2 steps, we can call `src/data/make_dataset.py`. It takes the following arguments:
+```
+-d (whether to download bigearthnet data), default is False
+-tf (whether to create tfrecords), default is True
+-tfl (whether to create tfrecords with labelled) default is True
+```
 3. California Data
-California data is generated using Goole Earth Engine API. The following are the latitude and longitude ranges:
-- Fresno to Bakersfield
--- lat_range = 35.125,35.375
--- lon_range = -119.875,-119.625
+California data is generated using Goole Earth Engine API. The following are the latitude and longitude ranges:  
 
--- lat_range = 35.125,35.375
--- lon_range = -119.125,-118.875
+a) Fresno to Bakersfield  
+	
+	lat_range = 35.125,35.375  
+	lon_range = -119.875,-119.625  
+	
+	lat_range = 35.125,35.375  
+	lon_range = -119.125,-118.875  
+	
+b) Sacramento to Merced  
+	
+	lat_range = 37.125,37.375  
+	lon_range = -121.125,-120.875  
+	
+	lat_range = 37.125,37.375  
+	lon_range = -121.125,-120.875  
+	
+c) Calexico Region  
+	
+	lat_range = 32.625,33.375  
+	lon_range = -115.875,-114.875  
 
-- Sacramento to Merced
--- lat_range = 37.125,37.375
--- lon_range = -121.125,-120.875
-
--- lat_range = 37.125,37.375
--- lon_range = -121.125,-120.875
-
-- Calexico Region
--- lat_range = 32.625,33.375
--- lon_range = -115.875,-114.875
-
-- North of Sacramento
--- lat_range = 39.875, 40.125
--- lon_range = -122.125,-121.875
+d) North of Sacramento  
+	
+	lat_range = 39.875, 40.125  
+	lon_range = -122.125,-121.875  
 
 The data is available in S3. 
 - Preferred option: s3://agcapbky/CaliforniaData/raw/zip/CaliforniaData.zip  (2 GB)
