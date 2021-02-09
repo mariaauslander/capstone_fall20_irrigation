@@ -152,9 +152,9 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     wandb.config.epochs = epochs
     wandb.config.batch_size = batch_size
     wandb.config.architecture = architecture
-    wandb.config.update({'dataset.percent': f'{percent}'})
-    wandb.config.update({'dataset.train': f'{len_train_records}'})
-    wandb.config.update({'dataset.val': f'{len_val_records}'})
+    wandb.config.update({'dataset.percent': percent})
+    wandb.config.update({'dataset.train': len_train_records})
+    wandb.config.update({'dataset.val': len_val_records})
 
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2': ResNet101V2,
@@ -189,13 +189,6 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     test_filenames = f'{TFR_PATH}/test-*.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=batch_size)
-    #     train_df = pd.read_pickle(training_filenames)
-    #     train_X = train_df.X.values
-    #     train_y = train_df.y.values
-
-    #     train_X = np.stack(train_X)
-    #     train_y = np.stack(train_y)
-
     val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
 
     # counting on the fly takes hours if not days
@@ -229,8 +222,15 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     # model.summary()
 
     if augment:
+        print(50 * "*")
+        print(f"augmenting")
+        print(50 * "=")
+        train_df = pd.read_pickle(training_filenames)
+        train_X = train_df.X.values
+        train_y = train_df.y.values
 
-        return
+        train_X = np.stack(train_X)
+        train_y = np.stack(train_y)
 
         datagen = image.ImageDataGenerator(
             rotation_range=180,
@@ -249,6 +249,7 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
                             validation_steps=validation_steps,
                             callbacks=[time_callback, early_stop, WandbCallback()],
                             class_weight=class_weight)
+
         # times = time_callback.times
         # df = pd.DataFrame(history.history)
         # df['times'] = time_callback.times
@@ -319,7 +320,7 @@ if __name__ == '__main__':
                         help="evaluate the model with test dataset")
     args = parser.parse_args()
 
-    augment = False
+    # augment = False
     # if args.augment == 'True':
     #     AUGMENT = True
 
@@ -329,7 +330,7 @@ if __name__ == '__main__':
               weights=False,
               architecture=args.arch,
               pretrain=False,
-              augment=augment,
+              augment=False,
               percent=args.percent,
               evaluate=args.test)
 
