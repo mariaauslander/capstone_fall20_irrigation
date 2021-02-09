@@ -33,14 +33,14 @@ The results above show that we benefit from pretraining on the California data a
 	```
 	pip install --upgrade wandb
 	wandb login e96802b17d8e833421348df053b41a538a810177
-	python train_supervised.py -a ARCH -o OUTPUT -e EPOCHS -b BATCH -g AUGMENT
+	python train_supervised.py -a ARCH -e EPOCHS -b BATCH -g AUGMENT -p PERCENT
 	``` 
 	- ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
-	- OUTPUT is a prefix
 	- EPOCHS is number of epochs to run (50 is default)
 	- BATCH is batch size (default is 32). 
 	- AUGMENT is True or False (whether to use data augmentation). (augment is not supported as of now) 
-	- For example, ```python train_supervised.py -a InceptionV3 -e 3 -b 32 -g False```  
+	- PERCENT is the portion of dataset to be used for training and validation 
+	- For example, ```python train_supervised.py -a InceptionV3 -e 50 -b 32 -g False -p 1```  
 1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
                  
 ## Notes on Data Augmentation
