@@ -151,7 +151,6 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     wandb.init(project="irrigation_detection")
     wandb.config.epochs = epochs
     wandb.config.batch_size = batch_size
-    wandb.config.learning_rate = 42
     wandb.config.architecture = architecture
     wandb.config.update({'dataset.percent': f'{percent}'})
     wandb.config.update({'dataset.train': f'{len_train_records}'})
