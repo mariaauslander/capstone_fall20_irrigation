@@ -5,7 +5,7 @@
 	- nvidia driver
 	- disk space (500GB+)
 - AWS
-	- p3.2xlarge instance baed on [NVIDIA Deep Learning AMI](https://aws.amazon.com/marketplace/pp/NVIDIA-NVIDIA-Deep-Learning-AMI/B076K31M1S)Note: Select 'Oregon' region as p3 instances are not available in all the regions.
+	- [p3.2xlarge (or g4dn.4xlarge)](https://towardsdatascience.com/choosing-the-right-gpu-for-deep-learning-on-aws-d69c157d8c86) instance baed on [NVIDIA Deep Learning AMI](https://aws.amazon.com/marketplace/pp/NVIDIA-NVIDIA-Deep-Learning-AMI/B076K31M1S)Note: Select 'Oregon' region as p3 instances are not available in all the regions.
 	- disk space (500GB+). 
 	- [TODO] other GPU instance needs to be tested and compared 
 
