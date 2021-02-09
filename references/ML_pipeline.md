@@ -37,9 +37,14 @@ aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive
 
 Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). The data can be downloaded using 
 ```
-aws s3 cp'
+aws s3 cp
 ```
-
+**Note**: Instead of the above 2 steps, we can call `src/data/make_dataset.py`. It takes the following arguments:
+```
+-d (whether to download bigearthnet data), default is False
+-tf (whether to create tfrecords), default is True
+-tfl (whether to create tfrecords with labelled) default is True
+```
 3. California Data
 California data is generated using Goole Earth Engine API. The following are the latitude and longitude ranges:  
 
