@@ -135,7 +135,7 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10):
+def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False):
 
     # previous team code was running on a lot smaller set
     # len_train_records = 4384*2
@@ -155,7 +155,6 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     wandb.config.update({'dataset.percent': f'{percent}'})
     wandb.config.update({'dataset.train': f'{len_train_records}'})
     wandb.config.update({'dataset.val': f'{len_val_records}'})
-    wandb.config.update({'dataset.test': f'{len_test_records}'})
 
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2': ResNet101V2,
@@ -185,10 +184,9 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
 
     # training_filenames = f'{TFR_PATH}/balanced_train_3percent.tfrecord'
     # validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
-    training_filenames = f'{TFR_PATH}/train.tfrecord'
-    validation_filenames = f'{TFR_PATH}/val.tfrecord'
-    test_filenames = f'{TFR_PATH}/test.tfrecord'
-
+    training_filenames = f'{TFR_PATH}/train-*.tfrecord'
+    validation_filenames = f'{TFR_PATH}/val-*.tfrecord'
+    test_filenames = f'{TFR_PATH}/test-*.tfrecord'
 
     training_data = get_training_dataset(training_filenames, batch_size=batch_size)
     #     train_df = pd.read_pickle(training_filenames)
@@ -199,8 +197,6 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     #     train_y = np.stack(train_y)
 
     val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
-
-    test_data = get_validation_dataset(test_filenames, batch_size=batch_size)
 
     # counting on the fly takes hours if not days
     # len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
@@ -273,25 +269,31 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
     # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
-    test_steps = len_test_records // batch_size
+    if evaluate:
+        wandb.config.update({'dataset.test': f'{len_test_records}'})
 
-    # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-    # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
-    perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps)
-    wandb.run.summary["test_loss"] = perf[0]
-    wandb.run.summary["test_tp"] = perf[1]
-    wandb.run.summary["test_fp"] = perf[2]
-    wandb.run.summary["test_tn"] = perf[3]
-    wandb.run.summary["test_fn"] = perf[4]
-    wandb.run.summary["test_accuracy"] = perf[5]
-    wandb.run.summary["test_precision"] = perf[6]
-    wandb.run.summary["test_recall"] = perf[7]
-    wandb.run.summary["test_auc"] = perf[8]
-    wandb.run.summary["test_perf"] = perf
+        test_data = get_validation_dataset(test_filenames, batch_size=batch_size)
+        test_steps = len_test_records // batch_size
 
-    # print(perf)
+        # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+        # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
+        perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps)
+        wandb.run.summary["test_loss"] = perf[0]
+        wandb.run.summary["test_tp"] = perf[1]
+        wandb.run.summary["test_fp"] = perf[2]
+        wandb.run.summary["test_tn"] = perf[3]
+        wandb.run.summary["test_fn"] = perf[4]
+        wandb.run.summary["test_accuracy"] = perf[5]
+        wandb.run.summary["test_precision"] = perf[6]
+        wandb.run.summary["test_recall"] = perf[7]
+        wandb.run.summary["test_auc"] = perf[8]
+        if (perf[6] + perf[7]) == 0:
+            wandb.run.summary["test_f1"] = 0
+        else:
+            wandb.run.summary["test_f1"] = 2*perf[6]*perf[7]/(perf[6] + perf[7])
+
     # Save model to wandb
-    model.save(os.path.join(wandb.run.dir, "model.h5"))
+    # model.save(os.path.join(wandb.run.dir, "model.h5"))
 
     return
     # return df
@@ -313,6 +315,8 @@ if __name__ == '__main__':
                         help="whether to augment the training data")
     parser.add_argument('-p', '--percent', default=10, type=int,
                         help="portion of datasets to be used for training. 1~100")
+    parser.add_argument('-t', '--test', default="False", type=str, choices=['True', 'False'],
+                        help="evaluate the model with test dataset")
     args = parser.parse_args()
 
     augment = False
@@ -326,5 +330,6 @@ if __name__ == '__main__':
               architecture=args.arch,
               pretrain=False,
               augment=augment,
-              percent=args.percent)
+              percent=args.percent,
+              evaluate=args.test)
 
