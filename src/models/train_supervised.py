@@ -332,5 +332,5 @@ if __name__ == '__main__':
               pretrain=False,
               augment=False,
               percent=args.percent,
-              evaluate=args.test)
+              evaluate=False)
 

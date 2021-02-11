@@ -69,6 +69,8 @@ def read_tfrecord(example):
         'original_labels_multi_hot': tf.io.FixedLenFeature([43], tf.int64)
     })
 
+    # https://gitlab.tubit.tu-berlin.de/rsim/BigEarthNet-S2_43-classes_models/blob/master/label_indices.json
+    # "Permanently irrigated land": 12,
     example['binary_label'] = example['original_labels_multi_hot'][tf.constant(12)]
 
     # After parsing our data into a tensor, let's standardize and reshape.
@@ -109,7 +111,7 @@ def read_tfrecord(example):
     
     multi_hot_label = reshaped_example['original_labels_multi_hot']
     binary_label = reshaped_example['binary_labels']
-    
+
     # Can update this to return the multilabel if doing multi-class classification
     return img, binary_label
 
@@ -191,7 +193,7 @@ def read_ca_tfrecord(example):
     
     return img, 0
   
-def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False):
+def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False):
     '''
     This function is used to return a batch generator for training our tensorflow model.
     basically we read from different tfrecords files, and shuffle our records.
@@ -202,23 +204,26 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
     option_no_order = tf.data.Options()
     option_no_order.experimental_deterministic = False
 
-    dataset = tf.data.Dataset.list_files(filenames, shuffle=True)
+    dataset = tf.data.Dataset.list_files(filenames, shuffle=shuffle)
     print(f'Filenames: {filenames}')
     dataset = dataset.with_options(option_no_order)
     dataset = dataset.interleave(tf.data.TFRecordDataset, cycle_length=2, num_parallel_calls=1)
-    
-    if simclr:
-      dataset = dataset.shuffle(buffer_size=2048)
-    else:
-      dataset = dataset.shuffle(buffer_size=2048).repeat()
-    
+
     if ca:
-      dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=10)
+      dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     else:
-      dataset = dataset.map(read_tfrecord, num_parallel_calls=10)
-      
-    dataset = dataset.batch(batch_size, drop_remainder=True)  
-    dataset = dataset.prefetch(5)  #
+      print(f'BigEarthDataSet')
+      dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+    # [todo] shuffle after map and caching? https://www.tensorflow.org/datasets/keras_example
+    if simclr:
+        dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=False)
+    else:
+        # dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=False).repeat()
+        dataset = dataset.shuffle(buffer_size=2048)
+
+    dataset = dataset.batch(batch_size, drop_remainder=True)
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)  #
 
     return dataset
 
