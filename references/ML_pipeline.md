@@ -5,6 +5,8 @@
 - Train images:269695
 - Test images:125866
 - Validation images:123723
+- Balanced irrigation: 6606
+- Balanced vineyards: 4758
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
