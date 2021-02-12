@@ -89,6 +89,31 @@ def preprocess_tfrecords():
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/val-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
 
+# Shards the data
+# tf_main_file is a main tf file name. The function will look for corresponding train, test, and val files
+# Ex: balanced, balanced_vy
+def shard_tfrecords(tf_main_file):
+
+    # Shard the Train data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_train.tfrecord")
+    shards = 50
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_train-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
+
+    # Shard the Test data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_test.tfrecord")
+    shards = 20
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_test-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
+
+    # Shard the Val data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_val.tfrecord")
+    shards = 20
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_val-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
 
 def preprocess_tfrecords_labelled(split):
     with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
@@ -296,10 +321,18 @@ if __name__ == "__main__":
                         help="whether to download bigearthnet data")
     parser.add_argument('-tf', '--tfrecords', default=False, type=bool,
                         help="whether to create tfrecords")
+
+    # process tf records labelled for balanced data
     parser.add_argument('-tfl', '--tfrecordslabeled', default=False, type=bool,
                         help="whether to create tfrecords with labelled")
     parser.add_argument('-s', '--split', default='train', type=str,
                         help="which dataset split to create (train,val,test)")
+
+    # Shard the data
+    parser.add_argument('-sd', '--sharddata', default=False, type=bool,
+                        help="whether to shard the data or not")
+    parser.add_argument('-sdn', '--shardname', default='balanced', type=str,
+                        help="which main file to shard")
     args = parser.parse_args()
 
     if args.download:
@@ -316,3 +349,8 @@ if __name__ == "__main__":
         print('preprocess_tfrecords_labelled---START')
         preprocess_tfrecords_labelled(args.split)
         print('preprocess_tfrecords_labelled---END')
+
+    if args.sharddata:
+        print('shard_tfrecords---START')
+        shard_tfrecords(args.shardname)
+        print('shard_tfrecords---END')
