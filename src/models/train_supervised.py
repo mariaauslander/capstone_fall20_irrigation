@@ -19,6 +19,7 @@ from tqdm import tqdm
 from wandb.keras import WandbCallback
 
 from utils import *
+import constants
 
 print(f'Using TensorFlow Version: {tf.__version__}')
 # sns.set()
@@ -30,11 +31,11 @@ TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
 
 
 def get_training_dataset(training_filenames, batch_size):
-    return get_batched_dataset(training_filenames, batch_size)
+    return get_batched_dataset(training_filenames, batch_size, shuffle=True)
 
 
 def get_validation_dataset(validation_filenames, batch_size):
-    return get_batched_dataset(validation_filenames, batch_size)
+    return get_batched_dataset(validation_filenames, batch_size, shuffle=False)
 
 
 METRICS = [
@@ -135,26 +136,38 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False):
+def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, balanced_ds=False):
 
-    # previous team code was running on a lot smaller set
-    # len_train_records = 4384*2
-    # len_val_records = 4384
-    # len_test_records = 4384
-    len_train_records = (269695 // 100) * percent
-    len_val_records = (123723 // 100) * percent
-    len_test_records = 125866
+    if balanced_ds:
+        # using balanced dataset
+        train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
+        val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
+        test_size = constants.BALANCED_TEST_SIZE
+    else:
+        # using imbalanced dataset
+        train_size = (constants.IMBALANCED_TRAIN_SIZE // 100) * percent
+        val_size = (constants.IMBALANCED_VAL__SIZE // 100) * percent
+        test_size = constants.IMBALANCED_TEST_SIZE
 
-    # 1. Start a W&B run
+    # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
     wandb.init(project="irrigation_detection")
     wandb.config.epochs = epochs
     wandb.config.batch_size = batch_size
     wandb.config.architecture = architecture
+
     wandb.config.update({'dataset.percent': percent})
-    wandb.config.update({'dataset.train': len_train_records})
-    wandb.config.update({'dataset.val': len_val_records})
+
+    if balanced_ds:
+        wandb.config.update({'dataset': 'balanced'})
+    else:
+        wandb.config.update({'dataset': 'imbalanced'})
+
+    # wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
+    wandb.config.update({'dataset.train': train_size})
+    wandb.config.update({'dataset.val': val_size})
+    wandb.config.update({'dataset.test': test_size})
 
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2': ResNet101V2,
@@ -163,10 +176,6 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
 
     architecture = arch_dict[args.arch]
 
-    # print(50 * "*")
-    # print(f"Running model: {name}")
-    # print(50 * "=")
-    # print(f"Batch Size: {batch_size}")
     if weights:
         neg = 38400 - 984
         pos = 984
@@ -182,27 +191,20 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
         class_weight = None
         print("Not Using Weights")
 
-    # training_filenames = f'{TFR_PATH}/balanced_train_3percent.tfrecord'
-    # validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
-    training_filenames = f'{TFR_PATH}/train-*.tfrecord'
-    validation_filenames = f'{TFR_PATH}/val-*.tfrecord'
-    test_filenames = f'{TFR_PATH}/test-*.tfrecord'
+    if balanced_ds:
+        training_filenames = f'{TFR_PATH}/{constants.BALANCED_TRAINING_FILENAMES}'
+        validation_filenames = f'{TFR_PATH}/{constants.BALANCED_VALIDATION_FILENAMES}'
+        test_filenames = f'{TFR_PATH}/{constants.BALANCED_TEST_FILENAMES}'
+    else:
+        training_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TRAINING_FILENAMES}'
+        validation_filenames = f'{TFR_PATH}/{constants.IMBALANCED_VALIDATION_FILENAMES}'
+        test_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TEST_FILENAMES}'
 
     training_data = get_training_dataset(training_filenames, batch_size=batch_size)
     val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
 
-    # counting on the fly takes hours if not days
-    # len_val_records = val_data.reduce(np.int64(0), lambda x, _: x + 1)
-    # print(f"val set: {len_val_records}")
-
-    # len_train_records = training_data.reduce(np.int64(0), lambda x, _: x + 1)
-    # print(f"train set: {len_train_records}")
-
-    # len_test_records = test_data.reduce(np.int64(0), lambda x, _: x + 1)
-    # print(f"test set: {len_test_records}")
-
-    steps_per_epoch = len_train_records // batch_size
-    validation_steps = len_val_records // batch_size
+    steps_per_epoch = train_size // batch_size
+    validation_steps = val_size // batch_size
 
     # Use an early stopping callback and our timing callback
     early_stop = tf.keras.callbacks.EarlyStopping(
@@ -214,17 +216,11 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
 
     time_callback = TimeHistory()
 
-    # print(f'Using Model Architecture: {architecture}')
-
     model = build_model(imported_model=architecture,
                         use_pretrain=pretrain)
-    # print(f'Trainable variables: {model.trainable_weights}')
-    # model.summary()
 
     if augment:
-        print(50 * "*")
-        print(f"augmenting")
-        print(50 * "=")
+        # [todo] not working
         train_df = pd.read_pickle(training_filenames)
         train_X = train_df.X.values
         train_y = train_df.y.values
@@ -255,29 +251,23 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
         # df['times'] = time_callback.times
 
     else:
-        model.fit(training_data,
+        model.fit(training_data.repeat(),
             epochs=epochs,
             steps_per_epoch=steps_per_epoch,
-            validation_data=val_data,
+            validation_data=val_data.repeat(),
             validation_steps=validation_steps,
-            # callbacks=[WandbCallback()],
             callbacks=[time_callback, early_stop, WandbCallback()],
             class_weight=class_weight)
-        # times = time_callback.times
-        # df = pd.DataFrame(history.history)
-        # df['times'] = time_callback.times
 
     # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
     if evaluate:
-        wandb.config.update({'dataset.test': f'{len_test_records}'})
-
         test_data = get_validation_dataset(test_filenames, batch_size=batch_size)
-        test_steps = len_test_records // batch_size
+        test_steps = test_size // batch_size
 
-        # [0.01763233356177807, 0.0, 0.0, 4384.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-        # perf = model.evaluate(test_data, steps=test_steps, callbacks=[WandbCallback()])
+        # callback on evaluation seems to override validation results (maybe that is good things)
+        # perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps, callbacks=[WandbCallback()])
         perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps)
         wandb.run.summary["test_loss"] = perf[0]
         wandb.run.summary["test_tp"] = perf[1]
@@ -294,43 +284,40 @@ def run_model(prefix, batch_size=32, epochs=50, weights=False, architecture="Res
             wandb.run.summary["test_f1"] = 2*perf[6]*perf[7]/(perf[6] + perf[7])
 
     # Save model to wandb
-    # model.save(os.path.join(wandb.run.dir, "model.h5"))
+    model.save(os.path.join(wandb.run.dir, "model.h5"))
 
     return
-    # return df
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
     parser.add_argument('-a', '--arch', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
-    parser.add_argument('-o', '--output', type=str,
-                        help='Output File Prefix for model file and dataframe')
     parser.add_argument('-b', '--batch_size', default=32, type=int,
                         help="batch size to use during training and validation")
     parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
-    parser.add_argument('-w', '--weights', default=False, type=bool,
-                        help="whether to use weights")
-    parser.add_argument('-g', '--augment', default="False", type=str, choices=['True', 'False'],
-                        help="whether to augment the training data")
+    # parser.add_argument('-w', '--weights', default=False, type=bool,
+    #                     help="whether to use weights")
+    # parser.add_argument('-g', '--augment', default=False, type=bool,
+    #                     help="whether to augment the training data")
     parser.add_argument('-p', '--percent', default=10, type=int,
                         help="portion of datasets to be used for training. 1~100")
-    parser.add_argument('-t', '--test', default="False", type=str, choices=['True', 'False'],
+    parser.add_argument('-t', '--test', default=False, type=bool,
                         help="evaluate the model with test dataset")
+    parser.add_argument('--pretrain', default=False, type=bool,
+                        help="use imagenet pretrained model")
+    parser.add_argument('-i', '--imbalanced', default=True, type=bool,
+                        help="use balanced data")
     args = parser.parse_args()
 
-    # augment = False
-    # if args.augment == 'True':
-    #     AUGMENT = True
-
-    run_model(args.output,
-              batch_size=args.batch_size,
+    run_model(batch_size=args.batch_size,
               epochs=args.epochs,
               weights=False,
               architecture=args.arch,
-              pretrain=False,
+              pretrain=args.pretrain,
               augment=False,
               percent=args.percent,
-              evaluate=False)
+              evaluate=args.test,
+              balanced_ds=args.imbalanced)
 

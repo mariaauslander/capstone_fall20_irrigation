@@ -192,7 +192,7 @@ def read_ca_tfrecord(example):
     img = tf.concat([bands_10m, bands_20m], axis=2)
     
     return img, 0
-  
+
 def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False):
     '''
     This function is used to return a batch generator for training our tensorflow model.
@@ -209,18 +209,17 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
     dataset = dataset.with_options(option_no_order)
     dataset = dataset.interleave(tf.data.TFRecordDataset, cycle_length=2, num_parallel_calls=1)
 
-    if ca:
-      dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    else:
-      print(f'BigEarthDataSet')
-      dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
     # [todo] shuffle after map and caching? https://www.tensorflow.org/datasets/keras_example
     if simclr:
         dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=False)
     else:
         # dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=False).repeat()
-        dataset = dataset.shuffle(buffer_size=2048)
+        dataset = dataset.shuffle(buffer_size=2048).repeat()
+
+    if ca:
+      dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    else:
+      dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)  #
