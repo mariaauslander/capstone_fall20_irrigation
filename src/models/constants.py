@@ -13,7 +13,7 @@ BALANCED_VY_TEST_SIZE = 4500
 BALANCED_VY_VAL_SIZE = 4758
 
 BALANCED_TRAINING_FILENAMES = 'balanced_train-part-*.tfrecord'
-BALANCED_VALIDATION_FILENAMES = '/balanced_val-part-*.tfrecord'
+BALANCED_VALIDATION_FILENAMES = 'balanced_val-part-*.tfrecord'
 BALANCED_TEST_FILENAMES = 'balanced_test-part-*.tfrecord'
 
 IMBALANCED_TRAINING_FILENAMES = 'train-*.tfrecord'

@@ -164,7 +164,7 @@ def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", 
     else:
         wandb.config.update({'dataset': 'imbalanced'})
 
-    # wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
+    wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
     wandb.config.update({'dataset.train': train_size})
     wandb.config.update({'dataset.val': val_size})
     wandb.config.update({'dataset.test': test_size})
