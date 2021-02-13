@@ -7,35 +7,12 @@ import tensorflow as tf
 print(pd.__version__)
 print(tf.__version__)
 
-
-tf_records_filename = '/workspace/app/data/processed/final_balanced_val.tfrecord'
-c = 0
-for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
-    c += 1
-print ("final_balanced_val.tfrecord",c)
-
-tf_records_filename = '/workspace/app/data/processed/final_balanced_val_vy.tfrecord'
-c = 0
-for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
-    c += 1
-print ("final_balanced_val_vy.tfrecord",c)
-
-tf_records_filename = '/workspace/app/data/processed/train.tfrecord'
-c = 0
-for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
-    c += 1
-print ("train.tfrecord",c)
-
-tf_records_filename = '/workspace/app/data/processed/test.tfrecord'
-c = 0
-for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
-    c += 1
-print ("test.tfrecord",c)
-
-tf_records_filename = '/workspace/app/data/processed/val.tfrecord'
-c = 0
-for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
-    c += 1
-print ("val.tfrecord",c)
-
-
+tf_file_path_list = ['balanced_train.tfrecord', 'balanced_test.tfrecord','balanced_val.tfrecord',
+                     'balanced_vy_train.tfrecord', 'balanced_vy_test.tfrecord', 'balanced_vy_val.tfrecord'
+                     ]
+for csv_file in tf_file_path_list:
+    tf_records_filename = '/workspace/app/data/processed/'+csv_file
+    c = 0
+    for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
+        c += 1
+    print (csv_file,c)

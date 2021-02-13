@@ -6,6 +6,14 @@
 - Test images:125866
 - Validation images:123723
 
+- Balanced train images:13932
+- Balanced test images:6604
+- Balanced val images:6606
+
+- Balanced vineyard train images:9790
+- Balanced vineyard test images:4500
+- Balanced vineyard val images:4758
+
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
 

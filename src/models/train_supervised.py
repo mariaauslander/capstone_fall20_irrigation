@@ -307,7 +307,7 @@ if __name__ == '__main__':
                         help="evaluate the model with test dataset")
     parser.add_argument('--pretrain', default=False, type=bool,
                         help="use imagenet pretrained model")
-    parser.add_argument('-i', '--imbalanced', default=True, type=bool,
+    parser.add_argument('-i', '--imbalanced', default=False, type=bool,
                         help="use balanced data")
     args = parser.parse_args()
 

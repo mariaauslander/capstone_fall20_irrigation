@@ -89,15 +89,40 @@ def preprocess_tfrecords():
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/val-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
 
+# Shards the data
+# tf_main_file is a main tf file name. The function will look for corresponding train, test, and val files
+# Ex: balanced, balanced_vy
+def shard_tfrecords(tf_main_file):
 
-def preprocess_tfrecords_labelled():
+    # Shard the Train data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_train.tfrecord")
+    shards = 50
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_train-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
+
+    # Shard the Test data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_test.tfrecord")
+    shards = 20
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_test-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
+
+    # Shard the Val data
+    raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_val.tfrecord")
+    shards = 20
+    for i in range(shards):
+        writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_val-part-{i}.tfrecord")
+        writer.write(raw_dataset.shard(shards, i))
+
+def preprocess_tfrecords_labelled(split):
     with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
         label_indices = json.load(f)
 
     root_folder = big_earth_path
 
     # splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/val.csv')
-    splits = glob(f'{big_earth_models_folder}splits/val.csv')
+    splits = glob(f'{big_earth_models_folder}splits/{split}.csv')
 
     # Checks the existence of patch folders and populate the list of patch folder paths
     folder_path_list = []
@@ -165,13 +190,13 @@ def preprocess_tfrecords_labelled():
     neg_df = pd.DataFrame(nonirrigated_examples, columns=['file'])
     # pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
     # neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-    pos_df.to_csv(big_earth_models_folder + 'splits/positive_val.csv')
-    neg_df.to_csv(big_earth_models_folder + 'splits/negative_val.csv')
+    pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
+    neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
 
     # pos_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
     # neg_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-    pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_val.csv')
-    neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_val.csv')
+    pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
+    neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
 
     len(pos_irr_df)
 
@@ -208,9 +233,9 @@ def preprocess_tfrecords_labelled():
     balanced_df = pd.concat([pos_df, neg_ir_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
-    balanced_df.to_csv(f'{big_earth_models_folder}splits/final_balanced_val.csv')
+    balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_{split}.csv')
 
-    splits = glob(f'{big_earth_models_folder}splits/final_balanced_val.*')
+    splits = glob(f'{big_earth_models_folder}splits/balanced_{split}.csv')
     patch_names_list = []
     split_names = []
     for csv_file in splits:
@@ -225,10 +250,11 @@ def preprocess_tfrecords_labelled():
         split_names, patch_names_list,
         label_indices, False, True)
 
+    # Start for vineyards data
     pos_df = pd.DataFrame(vy_examples, columns=['file'])
     neg_df = pd.DataFrame(nonvy_examples, columns=['file'])
-    pos_df.to_csv(big_earth_models_folder + 'splits/positive_val.csv')
-    neg_df.to_csv(big_earth_models_folder + 'splits/negative_val.csv')
+    pos_df.to_csv(big_earth_models_folder + 'splits/positive_vy_'+split+'.csv')
+    neg_df.to_csv(big_earth_models_folder + 'splits/negative_vy_'+split+'.csv')
 
     # # Create Data sets for finetuning. Make total dataset size divisible by 32 or 64 for easy batching
 
@@ -270,9 +296,9 @@ def preprocess_tfrecords_labelled():
     balanced_df = pd.concat([pos_df, neg_vy_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
-    balanced_df.to_csv(f'{big_earth_models_folder}splits/final_balanced_val_vy.csv')
+    balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
 
-    splits = glob(f'{big_earth_models_folder}splits/final_balanced_val_vy.*')
+    splits = glob(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
     patch_names_list = []
     split_names = []
     for csv_file in splits:
@@ -293,10 +319,20 @@ if __name__ == "__main__":
         description='This script creates TFRecord files for the BigEarthNet train, validation and test splits. It also shards the files.')
     parser.add_argument('-d', '--download', default=False, type=bool,
                         help="whether to download bigearthnet data")
-    parser.add_argument('-tf', '--tfrecords', default=True, type=bool,
+    parser.add_argument('-tf', '--tfrecords', default=False, type=bool,
                         help="whether to create tfrecords")
-    parser.add_argument('-tfl', '--tfrecordslabeled', default=True, type=bool,
+
+    # process tf records labelled for balanced data
+    parser.add_argument('-tfl', '--tfrecordslabeled', default=False, type=bool,
                         help="whether to create tfrecords with labelled")
+    parser.add_argument('-s', '--split', default='train', type=str,
+                        help="which dataset split to create (train,val,test)")
+
+    # Shard the data
+    parser.add_argument('-sd', '--sharddata', default=False, type=bool,
+                        help="whether to shard the data or not")
+    parser.add_argument('-sdn', '--shardname', default='balanced', type=str,
+                        help="which main file to shard")
     args = parser.parse_args()
 
     if args.download:
@@ -311,5 +347,10 @@ if __name__ == "__main__":
 
     if args.tfrecordslabeled:
         print('preprocess_tfrecords_labelled---START')
-        preprocess_tfrecords_labelled()
+        preprocess_tfrecords_labelled(args.split)
         print('preprocess_tfrecords_labelled---END')
+
+    if args.sharddata:
+        print('shard_tfrecords---START')
+        shard_tfrecords(args.shardname)
+        print('shard_tfrecords---END')
