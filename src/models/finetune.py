@@ -34,11 +34,11 @@ METRICS = [
       ] 
 
 def get_training_dataset(training_filenames, batch_size):
-  return get_batched_dataset(training_filenames, batch_size)
+  return get_batched_dataset(training_filenames, batch_size, shuffle=True)
 
 
 def get_validation_dataset(validation_filenames, batch_size):
-  return get_batched_dataset(validation_filenames, batch_size)
+  return get_batched_dataset(validation_filenames, batch_size, shuffle=False)
 
 
 def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
@@ -109,8 +109,8 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLAS
     else:
       validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
-    training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)
-    val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)
+    training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)   # shuffle
+    val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)  # no shuffle
 
     len_val_records = 4820 
     if training_dataset == 'final_balanced_train_10percent.tfrecord':
@@ -133,7 +133,6 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLAS
     
     print(f'Using {training_dataset} as training data.')
     print(f'{len_train_records} total records and {steps_per_epoch} steps per epoch')
-
 
     # Use an early stopping callback and our timing callback
     early_stop = tf.keras.callbacks.EarlyStopping(

@@ -16,4 +16,3 @@ for csv_file in tf_file_path_list:
     for record in tf.python.python_io.tf_record_iterator(tf_records_filename):
         c += 1
     print (csv_file,c)
-
