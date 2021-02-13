@@ -2,17 +2,17 @@
 
 # Dataset preparation
 #### BigEarthNet data splits:
-- Train images:269695
-- Test images:125866
-- Validation images:123723
+- Train images:269695 (51.9%)
+- Test images:125866 (24.23%)
+- Validation images:123723 (23.82%)
 
-- Balanced train images:13932
-- Balanced test images:6604
-- Balanced val images:6606
+- Balanced train images:13932 (51.33%)
+- Balanced test images:6604 (24.33%)
+- Balanced val images:6606 (24.33%)
 
-- Balanced vineyard train images:9790
-- Balanced vineyard test images:4500
-- Balanced vineyard val images:4758
+- Balanced vineyard train images:9790 (51.39%)
+- Balanced vineyard test images:4500 (23.62%)
+- Balanced vineyard val images:4758 (24.97%)
 
 #### EDA 
 # Integrating and Exploring the Combined MSI Dataset for California
