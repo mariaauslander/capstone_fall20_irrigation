@@ -1,7 +1,7 @@
 #!/bin/bash
 
-pip install --upgrade wandb
-wandb login <use your wandb apikey>
+#pip install --upgrade wandb
+#wandb login <use your wandb apikey>
 
 for epochs in 50 75 100
  do
@@ -10,7 +10,6 @@ for epochs in 50 75 100
    python train_supervised.py -a InceptionV3 \
                       -e epochs \
                       -b 32 \
-                      -g False \
                       -p percent \
                       -t True
 # End over percentages
