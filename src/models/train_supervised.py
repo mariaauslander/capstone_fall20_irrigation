@@ -139,32 +139,34 @@ def _random_apply(func, x, p):
 def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50"):
 
     # "50/50, 10/90, no"
+    test_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_TEST_FILENAMES)
+    test_size = constants.IMBALANCED_TEST_SIZE
+
     if downsample == "50/50":
         # using balanced dataset
         train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
         val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
         test_size = constants.BALANCED_TEST_SIZE
 
-        training_filenames = f'{TFR_PATH}/{constants.BALANCED_TRAINING_FILENAMES}'
-        validation_filenames = f'{TFR_PATH}/{constants.BALANCED_VALIDATION_FILENAMES}'
-        test_filenames = f'{TFR_PATH}/{constants.BALANCED_TEST_FILENAMES}'
-
+        training_filenames = os.path.join(TFR_PATH, "50-50/irrigation", constants.BALANCED_TRAINING_FILENAMES)
+        validation_filenames = os.path.join(TFR_PATH, "50-50/irrigation", constants.BALANCED_VALIDATION_FILENAMES)
+        # test_filenames = os.path.join(TFR_PATH, "50-50/irrigation", constants.BALANCED_TEST_FILENAMES)
     elif downsample == "10/90":
-        print("not supported yet")
-        return
-        # using balanced dataset
-        # train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
-        # val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
-        # test_size = constants.BALANCED_TEST_SIZE
+        # using less balanced dataset
+        train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
+        val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
+        test_size = constants.BALANCED_TEST_SIZE
+
+        training_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_TRAINING_FILENAMES)
+        validation_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_VALIDATION_FILENAMES)
+        # test_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_TEST_FILENAMES)
     else:
         # using imbalanced dataset
         train_size = (constants.IMBALANCED_TRAIN_SIZE // 100) * percent
         val_size = (constants.IMBALANCED_VAL__SIZE // 100) * percent
-        test_size = constants.IMBALANCED_TEST_SIZE
 
-        training_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TRAINING_FILENAMES}'
-        validation_filenames = f'{TFR_PATH}/{constants.IMBALANCED_VALIDATION_FILENAMES}'
-        test_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TEST_FILENAMES}'
+        training_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_TRAINING_FILENAMES)
+        validation_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_VALIDATION_FILENAMES)
 
     wandb.config.update({'dataset.train': train_size})
     wandb.config.update({'dataset.val': val_size})
@@ -189,11 +191,14 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         total = neg + pos
         neg_weight = (1 / neg) * (total) / 2.0
         pos_weight = (1 / pos) * (total) / 2.0
-        class_weight = {0: neg_weight,
-                        1: pos_weight}
+        class_weight = {0: 1,
+                        1: downsampling_factor}
         print(f"Using Class Weights (downsample factor: {downsampling_factor}")
         print('\tWeight for Negative Class: {:.2f}'.format(neg_weight))
         print('\tWeight for Positive Class: {:.2f}'.format(pos_weight))
+
+        wandb.config.update({'class_weight': downsampling_factor})
+
     else:
         class_weight = None
         print("Not Using Weights")
@@ -266,7 +271,10 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
 
         # callback on evaluation seems to override validation results (maybe that is good things)
         # perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps, callbacks=[WandbCallback()])
-        perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps)
+        perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps, return_dict=False)
+
+        print(perf)
+
         wandb.run.summary["test_loss"] = perf[0]
         wandb.run.summary["test_tp"] = perf[1]
         wandb.run.summary["test_fp"] = perf[2]
@@ -303,8 +311,8 @@ if __name__ == '__main__':
                         help="portion of datasets to be used for training. 1~100")
     parser.add_argument('-t', '--test', default=False, type=bool,
                         help="evaluate the model with test dataset")
-    parser.add_argument('--pretrain', default=False, type=bool,
-                        help="use imagenet pretrained model")
+    # parser.add_argument('--pretrain', default=False, type=bool,
+    #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
     args = parser.parse_args()
@@ -332,7 +340,7 @@ if __name__ == '__main__':
               epochs=args.epochs,
               upweight=args.upweight,
               arch=args.architecture,
-              pretrain=args.pretrain,
+              pretrain=False,
               augment=False,
               percent=args.percent,
               evaluate=args.test,

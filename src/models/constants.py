@@ -16,6 +16,10 @@ BALANCED_TRAINING_FILENAMES = 'balanced_train-part-*.tfrecord'
 BALANCED_VALIDATION_FILENAMES = 'balanced_val-part-*.tfrecord'
 BALANCED_TEST_FILENAMES = 'balanced_test-part-*.tfrecord'
 
+DOWNSAMPLED_TRAINING_FILENAMES = 'balanced_10_90_train-part-*.tfrecord'
+DOWNSAMPLED_VALIDATION_FILENAMES = 'balanced_10_90_val-part-*.tfrecord'
+DOWNSAMPLED_TEST_FILENAMES = 'balanced_10_90_test-part-*.tfrecord'
+
 IMBALANCED_TRAINING_FILENAMES = 'train-*.tfrecord'
 IMBALANCED_VALIDATION_FILENAMES = 'val-*.tfrecord'
 IMBALANCED_TEST_FILENAMES = 'test-*.tfrecord'
