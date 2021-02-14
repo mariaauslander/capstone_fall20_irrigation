@@ -2,22 +2,23 @@
 
 # Dataset preparation
 #### BigEarthNet data splits:
+##### Original
 - Train images:269695 (51.9%)
 - Test images:125866 (24.23%)
 - Validation images:123723 (23.82%)
-
+##### 50% positive and 50% negative irrigation
 - 50/50 Balanced train images:13932 (51.33%)
 - 50/50 Balanced test images:6604 (24.33%)
 - 50/50 Balanced val images:6606 (24.33%)
-
+##### 50% positive and 50% negative vineyard
 - 50/50 Balanced vineyard train images:9790 (51.39%)
 - 50/50 Balanced vineyard test images:4500 (23.62%)
 - 50/50 Balanced vineyard val images:4758 (24.97%)
-
+##### 10% positive and 90% negative irrigation
 - 10/90 Balanced train images:69660 (51.33%)
 - 10/90 Balanced test images:33020 (24.33%)
 - 50/50 Balanced val images:33030 (24.33%)
-
+##### 10% positive and 90% negative vineyard
 - 10/90 Balanced vineyard train images:48950 (51.39%)
 - 10/90 Balanced vineyard test images:22500 (23.62%)
 - 10/90 Balanced vineyard val images:23790 (24.97%)
