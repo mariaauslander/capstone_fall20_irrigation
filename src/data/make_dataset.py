@@ -30,10 +30,12 @@ if not os.path.exists(big_earth_models_folder):
 if not os.path.exists(out_folder):
     print('ERROR: folder', out_folder, 'does not exist')
 
-print(f'Using Python Version: {pd.__version__}')
+print(f'Using Pandas Version: {pd.__version__}')
 print(f'Using TensorFlow Version: {tf.__version__}')
 
 # Set up a symbolic link to allow for easy Python module imports. Then check to make sure the link works (it is a Unix link so check from shell)
+
+os.system("rm bemodels")
 os.system("ln -s '/workspace/app/data/raw/bigearthnet-models/' bemodels")
 os.system('ls bemodels')
 from bemodels import tensorflow_utils
@@ -114,6 +116,79 @@ def shard_tfrecords(tf_main_file):
     for i in range(shards):
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_val-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
+
+# Count BigEarthNet posiive and negative samples
+def count_bn_positive_negative():
+    with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
+        label_indices = json.load(f)
+
+    root_folder = big_earth_path
+    splits = glob(f'{big_earth_models_folder}splits/all.csv')
+
+    # Checks the existence of patch folders and populate the list of patch folder paths
+    folder_path_list = []
+    if not os.path.exists(root_folder):
+        print('ERROR: folder', root_folder, 'does not exist')
+
+    patch_names_list = []
+    split_names = []
+    for csv_file in splits:
+        patch_names_list.append([])
+        split_names.append(os.path.basename(csv_file).split('.')[0])
+        with open(csv_file, 'r') as fp:
+            csv_reader = csv.reader(fp, delimiter=',')
+            for row in csv_reader:
+                patch_names_list[-1].append(row[0].strip())
+
+    len(patch_names_list[0])
+
+    irrigated_examples = []
+    nonirrigated_examples = []
+    missing_count = 0
+    for patch_name in tqdm(patch_names_list[0]):
+        patch_folder_path = os.path.join(root_folder, patch_name)
+        patch_json_path = os.path.join(
+            patch_folder_path, patch_name + '_labels_metadata.json')
+        try:
+            with open(patch_json_path, 'rb') as f:
+                patch_json = json.load(f)
+        except:
+            #         print(f'Missing Labels for {patch_name}')
+            missing_count += 1
+            continue
+
+        if 'Permanently irrigated land' in patch_json['labels']:
+            irrigated_examples.append(patch_folder_path)
+        else:
+            nonirrigated_examples.append(patch_folder_path)
+
+    print ('irrigated_examples', len(irrigated_examples))
+    print('non-irrigated_examples', len(nonirrigated_examples))
+    print('missing_count', missing_count)
+    # Check for Vineyards
+    vy_examples = []
+    nonvy_examples = []
+    missing_count = 0
+    for patch_name in tqdm(patch_names_list[0]):
+        patch_folder_path = os.path.join(root_folder, patch_name)
+        patch_json_path = os.path.join(
+            patch_folder_path, patch_name + '_labels_metadata.json')
+        try:
+            with open(patch_json_path, 'rb') as f:
+                patch_json = json.load(f)
+        except:
+            #         print(f'Missing Labels for {patch_name}')
+            missing_count += 1
+            continue
+
+        if 'Vineyards' in patch_json['labels']:
+            vy_examples.append(patch_folder_path)
+        else:
+            nonvy_examples.append(patch_folder_path)
+
+    print('vineyard_examples', len(vy_examples))
+    print('non-vineyard_examples', len(nonvy_examples))
+    print('missing_count', missing_count)
 
 def preprocess_tfrecords_labelled(split):
     with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
@@ -227,6 +302,7 @@ def preprocess_tfrecords_labelled(split):
 
     sample_frac_ir = len(pos_df) / len(neg_df)
 
+
     neg_ir_df = neg_df.sample(frac=sample_frac_ir)
 
     # New
@@ -333,6 +409,11 @@ if __name__ == "__main__":
                         help="whether to shard the data or not")
     parser.add_argument('-sdn', '--shardname', default='balanced', type=str,
                         help="which main file to shard")
+
+    # Count bigearthnet positive and negative count
+    parser.add_argument('-cbpn', '--countbnposneg', default=False, type=bool,
+                        help="Count bigearthnet psoitive and negative")
+
     args = parser.parse_args()
 
     if args.download:
@@ -354,3 +435,8 @@ if __name__ == "__main__":
         print('shard_tfrecords---START')
         shard_tfrecords(args.shardname)
         print('shard_tfrecords---END')
+
+    if args.countbnposneg:
+        print('count_bn_positive_negative---START')
+        count_bn_positive_negative()
+        print('count_bn_positive_negative---END')
