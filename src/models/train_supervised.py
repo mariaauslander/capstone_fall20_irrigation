@@ -136,35 +136,36 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, balanced_ds=False):
+def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50"):
 
-    if balanced_ds:
+    # "50/50, 10/90, no"
+    if downsample == "50/50":
         # using balanced dataset
         train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
         val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
         test_size = constants.BALANCED_TEST_SIZE
+
+        training_filenames = f'{TFR_PATH}/{constants.BALANCED_TRAINING_FILENAMES}'
+        validation_filenames = f'{TFR_PATH}/{constants.BALANCED_VALIDATION_FILENAMES}'
+        test_filenames = f'{TFR_PATH}/{constants.BALANCED_TEST_FILENAMES}'
+
+    elif downsample == "10/90":
+        print("not supported yet")
+        return
+        # using balanced dataset
+        # train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
+        # val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
+        # test_size = constants.BALANCED_TEST_SIZE
     else:
         # using imbalanced dataset
         train_size = (constants.IMBALANCED_TRAIN_SIZE // 100) * percent
         val_size = (constants.IMBALANCED_VAL__SIZE // 100) * percent
         test_size = constants.IMBALANCED_TEST_SIZE
 
-    # Start a W&B run
-    # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
-    # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection")
-    wandb.config.epochs = epochs
-    wandb.config.batch_size = batch_size
-    wandb.config.architecture = architecture
+        training_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TRAINING_FILENAMES}'
+        validation_filenames = f'{TFR_PATH}/{constants.IMBALANCED_VALIDATION_FILENAMES}'
+        test_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TEST_FILENAMES}'
 
-    wandb.config.update({'dataset.percent': percent})
-
-    if balanced_ds:
-        wandb.config.update({'dataset': 'balanced'})
-    else:
-        wandb.config.update({'dataset': 'imbalanced'})
-
-    wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
     wandb.config.update({'dataset.train': train_size})
     wandb.config.update({'dataset.val': val_size})
     wandb.config.update({'dataset.test': test_size})
@@ -174,9 +175,15 @@ def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", 
                  'Xception': Xception,
                  'InceptionV3': InceptionV3}
 
-    architecture = arch_dict[args.arch]
+    architecture = arch_dict[arch]
 
-    if weights:
+    if upweight:
+
+        # approximation
+        downsampling_factor = constants.IMBALANCED_TRAIN_SIZE // constants.BALANCED_TRAIN_SIZE
+        # wandb.config.update({'downsample': downsampling_factor})
+
+        # class weight = original weight * downsampling factor
         neg = 38400 - 984
         pos = 984
         total = neg + pos
@@ -184,21 +191,12 @@ def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", 
         pos_weight = (1 / pos) * (total) / 2.0
         class_weight = {0: neg_weight,
                         1: pos_weight}
-        print(f"Using Class Weights: ")
+        print(f"Using Class Weights (downsample factor: {downsampling_factor}")
         print('\tWeight for Negative Class: {:.2f}'.format(neg_weight))
         print('\tWeight for Positive Class: {:.2f}'.format(pos_weight))
     else:
         class_weight = None
         print("Not Using Weights")
-
-    if balanced_ds:
-        training_filenames = f'{TFR_PATH}/{constants.BALANCED_TRAINING_FILENAMES}'
-        validation_filenames = f'{TFR_PATH}/{constants.BALANCED_VALIDATION_FILENAMES}'
-        test_filenames = f'{TFR_PATH}/{constants.BALANCED_TEST_FILENAMES}'
-    else:
-        training_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TRAINING_FILENAMES}'
-        validation_filenames = f'{TFR_PATH}/{constants.IMBALANCED_VALIDATION_FILENAMES}'
-        test_filenames = f'{TFR_PATH}/{constants.IMBALANCED_TEST_FILENAMES}'
 
     training_data = get_training_dataset(training_filenames, batch_size=batch_size)
     val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
@@ -291,14 +289,14 @@ def run_model(batch_size=32, epochs=50, weights=False, architecture="ResNet50", 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
-    parser.add_argument('-a', '--arch', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
+    parser.add_argument('-a', '--architecture', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
     parser.add_argument('-b', '--batch_size', default=32, type=int,
                         help="batch size to use during training and validation")
     parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
-    # parser.add_argument('-w', '--weights', default=False, type=bool,
-    #                     help="whether to use weights")
+    parser.add_argument('-u', '--upweight', default=False, type=bool,
+                        help="whether to use weights")
     # parser.add_argument('-g', '--augment', default=False, type=bool,
     #                     help="whether to augment the training data")
     parser.add_argument('-p', '--percent', default=10, type=int,
@@ -307,17 +305,36 @@ if __name__ == '__main__':
                         help="evaluate the model with test dataset")
     parser.add_argument('--pretrain', default=False, type=bool,
                         help="use imagenet pretrained model")
-    parser.add_argument('-i', '--imbalanced', default=False, type=bool,
-                        help="use balanced data")
+    parser.add_argument('-d', '--downsample', default="50/50", type=str,
+                        help="50/50, 10/90, no")
     args = parser.parse_args()
+
+    # Start a W&B run
+    # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
+    # wandb.init(project="irrigation_detection", name=name)
+    wandb.init(project="irrigation_detection")
+
+    # wandb.config.epochs = epochs
+    # wandb.config.batch_size = batch_size
+    # wandb.config.architecture = architecture
+    # wandb.config.update({'dataset.percent': percent})
+
+    wandb.config.update(args)  # adds all of the arguments as config variables
+
+    # if args.imbalanced:
+    #     wandb.config.update({'dataset': 'balanced'})
+    # else:
+    #     wandb.config.update({'dataset': 'imbalanced'})
+
+    wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
     run_model(batch_size=args.batch_size,
               epochs=args.epochs,
-              weights=False,
-              architecture=args.arch,
+              upweight=args.upweight,
+              arch=args.architecture,
               pretrain=args.pretrain,
               augment=False,
               percent=args.percent,
               evaluate=args.test,
-              balanced_ds=args.imbalanced)
+              downsample=args.downsample)
 
