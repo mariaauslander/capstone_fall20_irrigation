@@ -52,7 +52,32 @@ aws s3 cp s3://agcapbky/BigEarthNet/ ./s3_data/BigEarthNet/ --recursive
 		1.  v1: s3://BigEarthNet-v1.0
 		2. bigearthnet-models/label_indices.json 
 
-Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). The data can be downloaded using 
+Note: The generated TFRecords are also in S3 (s3://agcapbky/BigEarthNet/processed/). 
+Folder structure in S3:
+
+    ├── BigEarthNet       
+    │   ├── BigEarthNet-v1.0       
+    │   ├── bigearthnet-models     
+    │   ├── interim <- train/val/test TFRecords (no shard data)
+    │   │   └── 10-90  <- 10% positive and 90% negative images
+    │   │   │   ├── irrigation <- irrigation
+    │   │   │   └── vy <- vineyard
+    │   │   ├── 50-50  <- 50% positive and 50% negative images  
+    │   │   │   ├── irrigation <- irrigation
+    │   │   │   └── vy <- vineyard 
+    │   │   └── original <- Original split data from BigEarthNet 
+    │   └── processed <- train/val/test TFRecords - Shard data 
+    │       └── 10-90
+    │       │   ├── irrigation
+    │       │   └── vy 
+    │       ├── 50-50  
+    │       │   ├── irrigation
+    │       │   └── vy 
+    │       └── original     
+    ├── CaliforniaData           
+    └── Eurosat          
+
+The data can be downloaded using 
 ```
 aws s3 cp
 ```
