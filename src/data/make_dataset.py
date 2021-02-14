@@ -30,10 +30,12 @@ if not os.path.exists(big_earth_models_folder):
 if not os.path.exists(out_folder):
     print('ERROR: folder', out_folder, 'does not exist')
 
-print(f'Using Python Version: {pd.__version__}')
+print(f'Using Pandas Version: {pd.__version__}')
 print(f'Using TensorFlow Version: {tf.__version__}')
 
 # Set up a symbolic link to allow for easy Python module imports. Then check to make sure the link works (it is a Unix link so check from shell)
+
+os.system("rm bemodels")
 os.system("ln -s '/workspace/app/data/raw/bigearthnet-models/' bemodels")
 os.system('ls bemodels')
 from bemodels import tensorflow_utils
@@ -97,6 +99,7 @@ def shard_tfrecords(tf_main_file):
     # Shard the Train data
     raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_train.tfrecord")
     shards = 50
+    print("Sharding Train data")
     for i in range(shards):
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_train-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
@@ -104,6 +107,7 @@ def shard_tfrecords(tf_main_file):
     # Shard the Test data
     raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_test.tfrecord")
     shards = 20
+    print("Sharding Test data")
     for i in range(shards):
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_test-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
@@ -111,13 +115,89 @@ def shard_tfrecords(tf_main_file):
     # Shard the Val data
     raw_dataset = tf.data.TFRecordDataset(out_folder + "/"+tf_main_file+"_val.tfrecord")
     shards = 20
+    print("Sharding Validation data")
     for i in range(shards):
         writer = tf.data.experimental.TFRecordWriter(f"{out_folder}/{tf_main_file}_val-part-{i}.tfrecord")
         writer.write(raw_dataset.shard(shards, i))
 
-def preprocess_tfrecords_labelled(split):
+# Count BigEarthNet posiive and negative samples
+def count_bn_positive_negative():
     with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
         label_indices = json.load(f)
+
+    root_folder = big_earth_path
+    splits = glob(f'{big_earth_models_folder}splits/all.csv')
+
+    # Checks the existence of patch folders and populate the list of patch folder paths
+    folder_path_list = []
+    if not os.path.exists(root_folder):
+        print('ERROR: folder', root_folder, 'does not exist')
+
+    patch_names_list = []
+    split_names = []
+    for csv_file in splits:
+        patch_names_list.append([])
+        split_names.append(os.path.basename(csv_file).split('.')[0])
+        with open(csv_file, 'r') as fp:
+            csv_reader = csv.reader(fp, delimiter=',')
+            for row in csv_reader:
+                patch_names_list[-1].append(row[0].strip())
+
+    len(patch_names_list[0])
+
+    irrigated_examples = []
+    nonirrigated_examples = []
+    missing_count = 0
+    for patch_name in tqdm(patch_names_list[0]):
+        patch_folder_path = os.path.join(root_folder, patch_name)
+        patch_json_path = os.path.join(
+            patch_folder_path, patch_name + '_labels_metadata.json')
+        try:
+            with open(patch_json_path, 'rb') as f:
+                patch_json = json.load(f)
+        except:
+            #         print(f'Missing Labels for {patch_name}')
+            missing_count += 1
+            continue
+
+        if 'Permanently irrigated land' in patch_json['labels']:
+            irrigated_examples.append(patch_folder_path)
+        else:
+            nonirrigated_examples.append(patch_folder_path)
+
+    print ('irrigated_examples', len(irrigated_examples))
+    print('non-irrigated_examples', len(nonirrigated_examples))
+    print('missing_count', missing_count)
+    # Check for Vineyards
+    vy_examples = []
+    nonvy_examples = []
+    missing_count = 0
+    for patch_name in tqdm(patch_names_list[0]):
+        patch_folder_path = os.path.join(root_folder, patch_name)
+        patch_json_path = os.path.join(
+            patch_folder_path, patch_name + '_labels_metadata.json')
+        try:
+            with open(patch_json_path, 'rb') as f:
+                patch_json = json.load(f)
+        except:
+            #         print(f'Missing Labels for {patch_name}')
+            missing_count += 1
+            continue
+
+        if 'Vineyards' in patch_json['labels']:
+            vy_examples.append(patch_folder_path)
+        else:
+            nonvy_examples.append(patch_folder_path)
+
+    print('vineyard_examples', len(vy_examples))
+    print('non-vineyard_examples', len(nonvy_examples))
+    print('missing_count', missing_count)
+
+def preprocess_tfrecords_labelled(split, ten_ninety = False):
+    with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
+        label_indices = json.load(f)
+
+    print('Called preprocess_tfrecords_labelled with ten_ninety ',ten_ninety )
 
     root_folder = big_earth_path
 
@@ -190,13 +270,23 @@ def preprocess_tfrecords_labelled(split):
     neg_df = pd.DataFrame(nonirrigated_examples, columns=['file'])
     # pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
     # neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-    pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
-    neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
+    if ten_ninety:
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_10_90_' + split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_10_90_' + split + '.csv')
+        # Read back
+        pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_10_90_' + split + '.csv')
+        neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_10_90_' + split + '.csv')
+
+    else:
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
+        # Read back
+        pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_' + split + '.csv')
+        neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_' + split + '.csv')
 
     # pos_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
     # neg_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-    pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
-    neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
+
 
     len(pos_irr_df)
 
@@ -225,17 +315,25 @@ def preprocess_tfrecords_labelled(split):
     subset_neg_df_3p = neg_irr_df.sample(frac=sample_frac_3p)
     subset_neg_df_10p = neg_irr_df.sample(frac=sample_frac_10p)
 
-    sample_frac_ir = len(pos_df) / len(neg_df)
-
-    neg_ir_df = neg_df.sample(frac=sample_frac_ir)
+    neg_ir_df = None
+    if ten_ninety:
+        # Assume current positive as 10%, take 90% negative
+        neg_ir_df = neg_df.sample(n=len(pos_df) * 9)
+    else:
+        sample_frac_ir = len(pos_df) / len(neg_df)
+        neg_ir_df = neg_df.sample(frac=sample_frac_ir)
 
     # New
     balanced_df = pd.concat([pos_df, neg_ir_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
-    balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_{split}.csv')
+    if ten_ninety:
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
+    else:
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_{split}.csv')
 
-    splits = glob(f'{big_earth_models_folder}splits/balanced_{split}.csv')
     patch_names_list = []
     split_names = []
     for csv_file in splits:
@@ -253,8 +351,12 @@ def preprocess_tfrecords_labelled(split):
     # Start for vineyards data
     pos_df = pd.DataFrame(vy_examples, columns=['file'])
     neg_df = pd.DataFrame(nonvy_examples, columns=['file'])
-    pos_df.to_csv(big_earth_models_folder + 'splits/positive_vy_'+split+'.csv')
-    neg_df.to_csv(big_earth_models_folder + 'splits/negative_vy_'+split+'.csv')
+    if ten_ninety:
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_10_90_vy_' + split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_10_90_vy_' + split + '.csv')
+    else:
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_vy_'+split+'.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_vy_'+split+'.csv')
 
     # # Create Data sets for finetuning. Make total dataset size divisible by 32 or 64 for easy batching
 
@@ -275,9 +377,13 @@ def preprocess_tfrecords_labelled(split):
     print(len(subset_neg_vy_df_1p))
     print(len(subset_neg_vy_df_3p))
 
-    sample_frac_vy = len(pos_df) / len(neg_df)
-
-    neg_vy_df = neg_df.sample(frac=sample_frac_vy)
+    neg_vy_df = None
+    if ten_ninety:
+        # Assume current positive as 10%, take 90% negative
+        neg_vy_df = neg_df.sample(n=len(pos_df) * 9)
+    else:
+        sample_frac_vy = len(pos_df) / len(neg_df)
+        neg_vy_df = neg_df.sample(frac=sample_frac_vy)
 
     len(neg_vy_df) * 2
 
@@ -293,12 +399,18 @@ def preprocess_tfrecords_labelled(split):
     # #     balanced_df = balanced_df.sample(frac=1)
     # #     balanced_df.to_csv(f'./bigearthnet-models/splits/balanced_val{i}.csv')
 
+
     balanced_df = pd.concat([pos_df, neg_vy_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
-    balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
 
-    splits = glob(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
+    if ten_ninety:
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
+    else:
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
+
     patch_names_list = []
     split_names = []
     for csv_file in splits:
@@ -327,12 +439,19 @@ if __name__ == "__main__":
                         help="whether to create tfrecords with labelled")
     parser.add_argument('-s', '--split', default='train', type=str,
                         help="which dataset split to create (train,val,test)")
+    parser.add_argument('-tn', '--tenninety', default=True, type=bool,
+                        help="whether to create tfrecords with 10/90 split")
 
     # Shard the data
     parser.add_argument('-sd', '--sharddata', default=False, type=bool,
                         help="whether to shard the data or not")
     parser.add_argument('-sdn', '--shardname', default='balanced', type=str,
                         help="which main file to shard")
+
+    # Count bigearthnet positive and negative count
+    parser.add_argument('-cbpn', '--countbnposneg', default=False, type=bool,
+                        help="Count bigearthnet psoitive and negative")
+
     args = parser.parse_args()
 
     if args.download:
@@ -347,10 +466,15 @@ if __name__ == "__main__":
 
     if args.tfrecordslabeled:
         print('preprocess_tfrecords_labelled---START')
-        preprocess_tfrecords_labelled(args.split)
+        preprocess_tfrecords_labelled(args.split, args.tenninety)
         print('preprocess_tfrecords_labelled---END')
 
     if args.sharddata:
         print('shard_tfrecords---START')
         shard_tfrecords(args.shardname)
         print('shard_tfrecords---END')
+
+    if args.countbnposneg:
+        print('count_bn_positive_negative---START')
+        count_bn_positive_negative()
+        print('count_bn_positive_negative---END')
