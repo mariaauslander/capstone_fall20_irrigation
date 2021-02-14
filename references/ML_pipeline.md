@@ -17,7 +17,7 @@
 ##### 10% positive and 90% negative irrigation
 - 10/90 Balanced train images:69660 (51.33%)
 - 10/90 Balanced test images:33020 (24.33%)
-- 50/50 Balanced val images:33030 (24.33%)
+- 10/90 Balanced val images:33030 (24.33%)
 ##### 10% positive and 90% negative vineyard
 - 10/90 Balanced vineyard train images:48950 (51.39%)
 - 10/90 Balanced vineyard test images:22500 (23.62%)
