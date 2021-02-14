@@ -1,21 +1,15 @@
 import argparse
 # import seaborn as sns
 # from matplotlib.cm import get_cmap
-import csv
 import cv2
 import json
 import numpy as np
 import os
 import pandas as pd
 import tensorflow as tf
-import time
 import wandb
-from glob import glob
-from matplotlib import pyplot as plt
 from tensorflow.keras.applications import ResNet50, ResNet101V2, Xception, InceptionV3
-from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 from tensorflow.keras.preprocessing import image
-from tqdm import tqdm
 from wandb.keras import WandbCallback
 
 from utils import *
@@ -296,6 +290,16 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
 
 if __name__ == '__main__':
 
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
     parser.add_argument('-a', '--architecture', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
@@ -303,13 +307,13 @@ if __name__ == '__main__':
                         help="batch size to use during training and validation")
     parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
-    parser.add_argument('-u', '--upweight', default=False, type=bool,
+    parser.add_argument('-u', '--upweight', default=False, type=str2bool,
                         help="whether to use weights")
     # parser.add_argument('-g', '--augment', default=False, type=bool,
     #                     help="whether to augment the training data")
     parser.add_argument('-p', '--percent', default=10, type=int,
                         help="portion of datasets to be used for training. 1~100")
-    parser.add_argument('-t', '--test', default=False, type=bool,
+    parser.add_argument('-t', '--test', default=False, type=str2bool,
                         help="evaluate the model with test dataset")
     # parser.add_argument('--pretrain', default=False, type=bool,
     #                     help="use imagenet pretrained model")
@@ -336,6 +340,7 @@ if __name__ == '__main__':
 
     wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
+    print("upweights:", args.upweight)
     run_model(batch_size=args.batch_size,
               epochs=args.epochs,
               upweight=args.upweight,
