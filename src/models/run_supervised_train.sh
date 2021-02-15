@@ -4,11 +4,11 @@
 #wandb login <use your wandb apikey>
 #
 
-# ResNet50 Xception ResNet101V2
+# InceptionV3
 
 for down in 10/90 50/50
 do
-  for architecture in InceptionV3
+  for architecture in ResNet50 Xception ResNet101V2
   do
     for epochs in 100
     do

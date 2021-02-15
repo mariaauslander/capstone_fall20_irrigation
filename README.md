@@ -28,6 +28,31 @@ The results above show that we benefit from pretraining on the California data a
 ![tSNE California](reports/images/static_2048_tsne.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
+[TODO] Need to rewrite 
+While the end goal of this work was to produce a pretrained self-supervised model for California, the BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned. The final supervised model consists of all negative training examples downsampled at a rate of 19 or ??. Test set AUC was determined to be approximately 0.97 for both balanced (50/50 split of positive and negative examples) and skewed (10/90 split of positive and negative examples) test sets. In addition to establishing a baseline using the downsampled dataset, an evaluation was performed to show how supervised model performance drops with a reduction in labeled data. These results are shown in Figures \\ref{fig:sup\_auc} and \\ref{fig:sup\_f1} in terms of the receiver operating characteristic curves and F1-scores, respectively.
+
+#### Optimization Hyperparameters 
+- fixed: batch size 32/64
+- hyperparameters 
+	- architecture: InceptionV3, ResNet50, Xception, ResNet101V2
+	- epochs ~100 (with early stopping based on AUC)
+	- training set: 1% 3% 5% 10%, 100%
+	- downsampling: 50/50, 10/90
+	- upweighting: enable, disable
+
+**AUC (F1-score) **
+
+|  | 50/50 | 10/90 | no downsample | 
+| ----- | ----- | ----- | -------- | 
+| 1% | 0.8416 (0.1186) | 0.8198 (0) | ???? | 
+| 3% | 0.8818 (0.1414) | 0.8694 (0.1483) |  ???? | 
+| 5% | 0.9231 (0.2421) | 0.8920 (0.2290) | -- | 
+| 10% | 0.9359 (0.1967) | 0.9015 (0.152) | -- | 
+| 100% | 0.9641 (0.2888) | 0.9564 (0.4149) | -- | 
+
+Figure: AUC and F-1 score performance on test set varying the number of training set (positive samples) and downsamping factors. 
+
+#### To Reproduce 
 1. Follow the [setup](references/setup.md) and [data pipeline](references/ML_pipeline.md) to prepare the docker container and datasets.
 2. Train the model using the following command. 
 	```
@@ -44,7 +69,7 @@ The results above show that we benefit from pretraining on the California data a
 	- DOWNSAMPLE is to pick datasets which has been downsampled. `50/50`, `10/90`, or `no`. 
 	- For example, ```python train_supervised.py -a InceptionV3 -e 50 -b 32 -g False -p 1```  
 1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
-                 
+
 ## Notes on Data Augmentation
 Data augmentation is tested on our supervised model to ensure that:
 1. the pipeline works (making it easier to implement in our unsupervised model)
