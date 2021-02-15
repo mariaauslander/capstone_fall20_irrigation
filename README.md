@@ -63,9 +63,9 @@ Figure: AUC and F-1 score performance on test set varying the number of training
 	- ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
 	- EPOCHS is number of epochs to run (50 is default)
 	- BATCH is batch size (default is 32). 
-	- AUGMENT is True or False (whether to use data augmentation). (augment is not supported as of now) 
+	- AUGMENT is true or false (whether to use data augmentation). (augment is not supported as of now) 
 	- PERCENT is the portion of dataset to be used for training and validation
-	- TEST is True or False (whether to run evaluation on the test set with the trained model at the end)
+	- TEST is true or false (whether to run evaluation on the test set with the trained model at the end)
 	- DOWNSAMPLE is to pick datasets which has been downsampled. `50/50`, `10/90`, or `no`. 
 	- For example, ```python train_supervised.py -a InceptionV3 -e 50 -b 32 -g False -p 1```  
 1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
