@@ -2,21 +2,38 @@
 
 #pip install --upgrade wandb
 #wandb login <use your wandb apikey>
+#
 
-for architecture in InceptionV3 ResNet50 Xception ResNet101V2
+# InceptionV3
+
+for batch in 32 64
 do
-  for epochs in 50 100
+  for weight in 0 1
   do
-    for percent in 1 3 5 10
+    for down in 10/90
     do
-      python train_supervised.py -a $architecture \
-                      -e $epochs \
-                      -b 32 \
-                      -p $percent \
-                      -t True
-    # End over percentages
+      for architecture in InceptionV3 ResNet50 Xception ResNet101V2
+      do
+        for epochs in 100
+        do
+          for percent in 1 3 5 10 100
+          do
+            python train_supervised.py -a $architecture \
+                            -e $epochs \
+                            -b $batch \
+                            -p $percent \
+                            -d $down \
+                            -u $weight \
+                            -t 1
+          # End over percentages
+          done
+        # End over epochs
+        done
+      # End over architecture
+      done
+    # End over downsampling
     done
-  # End over epochs
+  # End over class-weight
   done
-# End over architecture
+# End over batch
 done
