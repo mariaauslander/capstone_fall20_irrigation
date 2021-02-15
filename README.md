@@ -29,6 +29,13 @@ The results above show that we benefit from pretraining on the California data a
 
 ## Supervised Baseline Training - BigEarthNet Data
 [TODO] Need to rewrite 
+
+[amended draft]
+The BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned....
+
+
+
+[previous team]
 While the end goal of this work was to produce a pretrained self-supervised model for California, the BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned. The final supervised model consists of all negative training examples downsampled at a rate of 19 or ??. Test set AUC was determined to be approximately 0.97 for both balanced (50/50 split of positive and negative examples) and skewed (10/90 split of positive and negative examples) test sets. In addition to establishing a baseline using the downsampled dataset, an evaluation was performed to show how supervised model performance drops with a reduction in labeled data. These results are shown in Figures \\ref{fig:sup\_auc} and \\ref{fig:sup\_f1} in terms of the receiver operating characteristic curves and F1-scores, respectively.
 
 #### Optimization Hyperparameters 
