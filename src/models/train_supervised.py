@@ -147,8 +147,8 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         # test_filenames = os.path.join(TFR_PATH, "50-50/irrigation", constants.BALANCED_TEST_FILENAMES)
     elif downsample == "10/90":
         # using less balanced dataset
-        train_size = (constants.BALANCED_TRAIN_SIZE // 100) * percent
-        val_size = (constants.BALANCED_VAL_SIZE // 100) * percent
+        train_size = (constants.DOWNSAMPLED_TRAIN_SIZE // 100) * percent
+        val_size = (constants.DOWNSAMPLED_VAL_SIZE // 100) * percent
         # test_size = constants.BALANCED_TEST_SIZE
 
         training_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_TRAINING_FILENAMES)

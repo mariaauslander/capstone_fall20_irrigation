@@ -6,26 +6,34 @@
 
 # InceptionV3
 
-for down in 10/90 50/50
+for batch in 32 64
 do
-  for architecture in ResNet50 Xception ResNet101V2
+  for weight in 0 1
   do
-    for epochs in 100
+    for down in 10/90
     do
-      for percent in 1 3 5 10 100
+      for architecture in InceptionV3 ResNet50 Xception ResNet101V2
       do
-        python train_supervised.py -a $architecture \
-                        -e $epochs \
-                        -b 64 \
-                        -p $percent \
-                        -d $down \
-                        -u 0 \
-                        -t 1
-      # End over percentages
+        for epochs in 100
+        do
+          for percent in 1 3 5 10 100
+          do
+            python train_supervised.py -a $architecture \
+                            -e $epochs \
+                            -b $batch \
+                            -p $percent \
+                            -d $down \
+                            -u $weight \
+                            -t 1
+          # End over percentages
+          done
+        # End over epochs
+        done
+      # End over architecture
       done
-    # End over epochs
+    # End over downsampling
     done
-  # End over architecture
+  # End over class-weight
   done
-# End over class-weight
+# End over batch
 done
