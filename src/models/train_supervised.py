@@ -324,7 +324,7 @@ if __name__ == '__main__':
     # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection")
+    wandb.init(project="irrigation_detection", entity="cal-capstone" )
 
     # wandb.config.epochs = epochs
     # wandb.config.batch_size = batch_size
