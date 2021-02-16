@@ -307,8 +307,8 @@ if __name__ == '__main__':
                         help="batch size to use during training and validation")
     parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
-    parser.add_argument('-u', '--upweight', default=False, type=str2bool,
-                        help="whether to use weights")
+    # parser.add_argument('-u', '--upweight', default=False, type=str2bool,
+    #                     help="whether to use weights")
     # parser.add_argument('-g', '--augment', default=False, type=bool,
     #                     help="whether to augment the training data")
     parser.add_argument('-p', '--percent', default=10, type=int,
@@ -340,10 +340,10 @@ if __name__ == '__main__':
 
     wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
-    print("upweights:", args.upweight)
+    # print("upweights:", args.upweight)
     run_model(batch_size=args.batch_size,
               epochs=args.epochs,
-              upweight=args.upweight,
+              # upweight=args.upweight,
               arch=args.architecture,
               pretrain=False,
               augment=False,
