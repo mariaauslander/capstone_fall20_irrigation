@@ -34,11 +34,6 @@ The results above show that we benefit from pretraining on the California data a
 The BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned.
 The final supervised benchmark model consisted of all negative training examples downsampled at a rate of 19 or ??. The AUC was determined to be approximately 0.97 for both balanced test dataset (50/50 split of positive and negative examples) and skewed test dataset (10/90 split of positive and negative examples). In addition to establishing a baseline using the downsampled dataset, an evaluation was performed to show how supervised model performance drops with a reduction in labeled data. These results are shown in Figures \ref{fig:sup_auc} and \ref{fig:sup_f1} in terms of the receiver operating characteristic curves and F1-scores, respectively.
 
-
-
-[previous team]
-While the end goal of this work was to produce a pretrained self-supervised model for California, the BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned. The final supervised model consists of all negative training examples downsampled at a rate of 19 or ??. Test set AUC was determined to be approximately 0.97 for both balanced (50/50 split of positive and negative examples) and skewed (10/90 split of positive and negative examples) test sets. In addition to establishing a baseline using the downsampled dataset, an evaluation was performed to show how supervised model performance drops with a reduction in labeled data. These results are shown in Figures \\ref{fig:sup\_auc} and \\ref{fig:sup\_f1} in terms of the receiver operating characteristic curves and F1-scores, respectively.
-
 #### Optimization Hyperparameters 
 - fixed: batch size 32/64
 - hyperparameters 
@@ -52,11 +47,11 @@ While the end goal of this work was to produce a pretrained self-supervised mode
 
 |  | 50/50 | 10/90 | no downsample | 
 | ----- | ----- | ----- | -------- | 
-| 1% | 0.8416 (0.1186) | 0.8198 (0) | ???? | 
-| 3% | 0.8818 (0.1414) | 0.8694 (0.1483) |  ???? | 
-| 5% | 0.9231 (0.2421) | 0.8920 (0.2290) | -- | 
-| 10% | 0.9359 (0.1967) | 0.9015 (0.152) | -- | 
-| 100% | 0.9641 (0.2888) | 0.9564 (0.4149) | -- | 
+| 1% | 0.8454 (0.09001) | 0.8934 (0.153) | 0.5 (0) | 
+| 3% | 0.9043 (0.1596) | 0.9214 (0.2845) |  0.8149 (0) | 
+| 5% | 0.9231 (0.2421) | 0.9439 (0.3004) | 0.8845 (0) | 
+| 10% | 0.9448 (0.2515) | 0.9323 (0.255) | 0.9132 (0) | 
+| 100% | 0.9648 (0.3148) | 0.973 (0.5296) | 0.9731 (0.478) | 
 
 Figure: AUC and F-1 score performance on test set varying the number of training set (positive samples) and downsamping factors. 
 
