@@ -340,7 +340,8 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
-    parser.add_argument('-o', '--output_activation', choices=['sigmoid', 'softmax'],
+
+    parser.add_argument('-o', '--output_activation', default='sigmoid', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
                         help='output layer of activation func to use for classification')
 
     args = parser.parse_args()
@@ -348,8 +349,7 @@ if __name__ == '__main__':
     # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection", entity="cal-capstone", tags=["Ken_task_run"])
-
+    wandb.init(project="irrigation_detection", entity="cal-capstone")
     # wandb.config.epochs = epochs
     # wandb.config.batch_size = batch_size
     # wandb.config.architecture = architecture

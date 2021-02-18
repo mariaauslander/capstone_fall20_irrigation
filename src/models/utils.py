@@ -4,8 +4,13 @@ import numpy as np
 import time
 from tensorflow.keras.preprocessing import image
 
+datafile_image_patches = {}
 
-def read_tfrecord(example):
+# Reades TF Record which includes additional parameters
+def read_tfrecord_extra_info(example):
+    return read_tfrecord(example, return_extra_info=True)
+
+def read_tfrecord(example, return_extra_info=False):
     '''
     THIS FUNCTION IS USED TO PARSE THE TFRECORDS FILES FOR BIGEARTHNET DATA.
     THE BAND STATISTICS WERE PROVIDED BY THE BIGEARTHNET TEAM
@@ -113,7 +118,10 @@ def read_tfrecord(example):
     binary_label = reshaped_example['binary_labels']
 
     # Can update this to return the multilabel if doing multi-class classification
-    return img, binary_label
+    if return_extra_info:
+        return img, binary_label, reshaped_example['patch_name']
+    else:
+        return img, binary_label
 
 def read_ca_tfrecord(example):
     '''
@@ -216,6 +224,9 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
         # dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=False).repeat()
         dataset = dataset.shuffle(buffer_size=2048).repeat()
 
+    #Cache the initial dataset
+    dataset_for_patches = dataset
+
     if ca:
       dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     else:
@@ -224,6 +235,16 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)  #
 
+    # The above dataset doesn't have the real data loaded when the map function is called.
+    # Using take function on 2 examples to minimize the performance issues and side effects
+    global datafile_image_patches
+    image_patches = []
+    dataset_examples = dataset_for_patches.map(read_tfrecord_extra_info,
+                                               num_parallel_calls=tf.data.experimental.AUTOTUNE).take(2)
+    for img, label, patch in dataset_examples:
+        image_patches.append(str(patch.values.numpy())[3:-2])
+    datafile_image_patches[filenames] = image_patches
+    #print(datafile_image_patches)
     return dataset
 
 class TimeHistory(tf.keras.callbacks.Callback):
