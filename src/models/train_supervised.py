@@ -15,6 +15,10 @@ from wandb.keras import WandbCallback
 from utils import *
 import constants
 
+
+import tensorflow_addons as tfa
+
+
 print(f'Using TensorFlow Version: {tf.__version__}')
 # sns.set()
 
@@ -41,6 +45,11 @@ METRICS = [
     tf.keras.metrics.Precision(name='precision'),
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.AUC(name='auc'),
+    tfa.metrics.F1Score(name='tfa_f1', num_classes=1),
+    tfa.metrics.FBetaScore(name='tfa_f05', num_classes=1, beta=0.5),
+    tfa.metrics.FBetaScore(name='tfa_f2', num_classes=1, beta=2.0),
+    tfa.metrics.FBetaScore(name='tfa_f6', num_classes=1, beta=6.0)
+
 ]
 
 def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None):
@@ -285,6 +294,11 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         wandb.run.summary["test_precision"] = perf[6]
         wandb.run.summary["test_recall"] = perf[7]
         wandb.run.summary["test_auc"] = perf[8]
+        wandb.run.summary["test_tfa_f1"] = perf[9]
+        wandb.run.summary["test_tfa_f05"] = perf[10]
+        wandb.run.summary["test_tfa_f2"] = perf[11]
+        wandb.run.summary["test_tfa_f6"] = perf[12]
+
         if (perf[6] + perf[7]) == 0:
             wandb.run.summary["test_f1"] = 0
         else:
