@@ -43,7 +43,7 @@ METRICS = [
     tf.keras.metrics.AUC(name='auc'),
 ]
 
-def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None, output_activation="sigmoid"):
+def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None):
     if output_bias is not None:
         output_bias = tf.keras.initializers.Constant(output_bias)
     if use_pretrain:
@@ -62,8 +62,10 @@ def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None,
     h2 = tf.keras.layers.Dense(512, activation='elu')(h1)
     h2 = tf.keras.layers.Dropout(0.25)(h2)
     clf = tf.keras.layers.Dense(256, activation='elu')(h2)
-    output = tf.keras.layers.Dense(1, activation=output_activation,
-                                   bias_initializer=output_bias)(clf)
+    # output = tf.keras.layers.Dense(1, activation=output_activation,
+    #                                bias_initializer=output_bias)(clf)
+
+    output = tf.keras.layers.Dense(1, activation=output_activation, bias_initializer=output_bias)(clf)
 
 
     # define new model
@@ -175,13 +177,6 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
 
     architecture = arch_dict[arch]
 
-
-    activation_dict = {'sigmoid': 'sigmoid',
-                       'softmax': 'softmax',
-                       'relu': 'relu',
-                       'tanh': 'tanh'
-                       }
-    output_activation = activation_dict[activation]
 
     if upweight:
 
@@ -331,7 +326,7 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
-    parser.add_argument('-o', '--output_activation', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
+    parser.add_argument('-o', '--output_activation', choices=['sigmoid', 'softmax'],
                         help='output layer of activation func to use for classification')
 
     args = parser.parse_args()
@@ -356,6 +351,8 @@ if __name__ == '__main__':
     wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
     print("upweights:", args.upweight)
+    print("output_activation", args.output_activation)
+
     run_model(batch_size=args.batch_size,
               epochs=args.epochs,
               upweight=args.upweight,
@@ -367,4 +364,5 @@ if __name__ == '__main__':
               downsample=args.downsample,
               activation=args.output_activation
               )
+
 
