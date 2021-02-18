@@ -43,7 +43,7 @@ METRICS = [
     tf.keras.metrics.AUC(name='auc'),
 ]
 
-def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None):
+def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None, output_activation="sigmoid"):
     if output_bias is not None:
         output_bias = tf.keras.initializers.Constant(output_bias)
     if use_pretrain:
@@ -62,8 +62,10 @@ def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None)
     h2 = tf.keras.layers.Dense(512, activation='elu')(h1)
     h2 = tf.keras.layers.Dropout(0.25)(h2)
     clf = tf.keras.layers.Dense(256, activation='elu')(h2)
-    output = tf.keras.layers.Dense(1, activation='sigmoid',
+    output = tf.keras.layers.Dense(1, activation=output_activation,
                                    bias_initializer=output_bias)(clf)
+
+
     # define new model
     model = tf.keras.models.Model(inputs=model.inputs, outputs=output)
 
@@ -130,7 +132,7 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50"):
+def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50", activation="sigmoid"):
 
     # "50/50, 10/90, no"
     test_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_TEST_FILENAMES)
@@ -173,6 +175,14 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
 
     architecture = arch_dict[arch]
 
+
+    activation_dict = {'sigmoid': 'sigmoid',
+                       'softmax': 'softmax',
+                       'relu': 'relu',
+                       'tanh': 'tanh'
+                       }
+    output_activation = activation_dict[activation]
+
     if upweight:
 
         # approximation
@@ -214,7 +224,9 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
     time_callback = TimeHistory()
 
     model = build_model(imported_model=architecture,
-                        use_pretrain=pretrain)
+                        use_pretrain=pretrain,
+                        output_activation=activation
+                        )
 
     if augment:
         # [todo] not working
@@ -319,12 +331,15 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
+    parser.add_argument('-o', '--output_activation', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
+                        help='output layer of activation func to use for classification')
+
     args = parser.parse_args()
 
     # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection")
+    wandb.init(project="irrigation_detection", entity="cal-capstone", tags=["Ken_task_run"])
 
     # wandb.config.epochs = epochs
     # wandb.config.batch_size = batch_size
@@ -349,5 +364,7 @@ if __name__ == '__main__':
               augment=False,
               percent=args.percent,
               evaluate=args.test,
-              downsample=args.downsample)
+              downsample=args.downsample,
+              activation=args.output_activation
+              )
 
