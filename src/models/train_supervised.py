@@ -331,7 +331,7 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
-    parser.add_argument('-o', '--output_activation', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
+    parser.add_argument('-o', '--output_activation', default='sigmoid', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
                         help='output layer of activation func to use for classification')
 
     args = parser.parse_args()
