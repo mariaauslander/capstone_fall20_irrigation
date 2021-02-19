@@ -193,15 +193,14 @@ def count_bn_positive_negative():
     print('non-vineyard_examples', len(nonvy_examples))
     print('missing_count', missing_count)
 
-def preprocess_tfrecords_labelled(split, ten_ninety = False):
+def preprocess_tfrecords_labelled(split, ratio = '50-50', include_vineyard = False):
     with open(big_earth_models_folder + 'label_indices.json', 'rb') as f:
         label_indices = json.load(f)
 
-    print('Called preprocess_tfrecords_labelled with ten_ninety ',ten_ninety )
+    print('Called preprocess_tfrecords_labelled with split ratio ',ratio )
 
     root_folder = big_earth_path
 
-    # splits = glob(f'/workspace/app/data/raw/bigearthnet-models/splits/val.csv')
     splits = glob(f'{big_earth_models_folder}splits/{split}.csv')
 
     # Checks the existence of patch folders and populate the list of patch folder paths
@@ -268,32 +267,25 @@ def preprocess_tfrecords_labelled(split, ten_ninety = False):
     # New: This was added as the next code directly reads the csv and creates a dataframe
     pos_df = pd.DataFrame(irrigated_examples, columns=['file'])
     neg_df = pd.DataFrame(nonirrigated_examples, columns=['file'])
-    # pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
-    # neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-    if ten_ninety:
+    if ratio == '50-50':
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_' + split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_' + split + '.csv')
+        # Read back
+        pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_' + split + '.csv')
+        neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_' + split + '.csv')
+    elif ratio == '10-90':
         pos_df.to_csv(big_earth_models_folder + 'splits/positive_10_90_' + split + '.csv')
         neg_df.to_csv(big_earth_models_folder + 'splits/negative_10_90_' + split + '.csv')
         # Read back
         pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_10_90_' + split + '.csv')
         neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_10_90_' + split + '.csv')
-
-    else:
-        pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+split+'.csv')
-        neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+split+'.csv')
+    else: #'64', '128', '256', '512', '1024'
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+ratio+'_'+ split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+ratio+'_'+ split + '.csv')
         # Read back
-        pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_' + split + '.csv')
-        neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_' + split + '.csv')
+        pos_irr_df = pd.read_csv(big_earth_models_folder + 'splits/positive_'+ratio+'_'+ split + '.csv')
+        neg_irr_df = pd.read_csv(big_earth_models_folder + 'splits/negative_'+ratio+'_'+ split + '.csv')
 
-    # pos_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_train.csv')
-    # neg_irr_df = pd.read_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_train.csv')
-
-
-    len(pos_irr_df)
-
-    # pos_df = pd.DataFrame(vy_examples,columns=['file'])
-    # neg_df = pd.DataFrame(nonvy_examples,columns=['file'])
-    # pos_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/positive_vy_val.csv')
-    # neg_df.to_csv('/workspace/app/data/raw/bigearthnet-models/splits/negative_vy_val.csv')
 
     # # Create Data sets for finetuning. Make total dataset size divisible by 32 or 64 for easy batching
 
@@ -316,23 +308,30 @@ def preprocess_tfrecords_labelled(split, ten_ninety = False):
     subset_neg_df_10p = neg_irr_df.sample(frac=sample_frac_10p)
 
     neg_ir_df = None
-    if ten_ninety:
-        # Assume current positive as 10%, take 90% negative
-        neg_ir_df = neg_df.sample(n=len(pos_df) * 9)
-    else:
+
+    if ratio == '50-50':
         sample_frac_ir = len(pos_df) / len(neg_df)
         neg_ir_df = neg_df.sample(frac=sample_frac_ir)
+    elif ratio == '10-90':
+        # Assume current positive as 10%, take 90% negative
+        neg_ir_df = neg_df.sample(n=len(pos_df) * 9)
+    else: #'64', '128', '256', '512', '1024'
+        pos_df = pos_df.sample(n=int(ratio))
+        neg_ir_df = neg_df.sample(n=len(pos_df))
 
     # New
     balanced_df = pd.concat([pos_df, neg_ir_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
-    if ten_ninety:
-        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
-        splits = glob(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
-    else:
+    if ratio == '50-50':
         balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_{split}.csv')
         splits = glob(f'{big_earth_models_folder}splits/balanced_{split}.csv')
+    elif ratio == '10-90':
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_10_90_{split}.csv')
+    else: #'64', '128', '256', '512', '1024'
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_{ratio}_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_{ratio}_{split}.csv')
 
     patch_names_list = []
     split_names = []
@@ -349,14 +348,20 @@ def preprocess_tfrecords_labelled(split, ten_ninety = False):
         label_indices, False, True)
 
     # Start for vineyards data
+    if not include_vineyard:
+        return
+
     pos_df = pd.DataFrame(vy_examples, columns=['file'])
     neg_df = pd.DataFrame(nonvy_examples, columns=['file'])
-    if ten_ninety:
+    if ratio == '50-50':
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_vy_' + split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_vy_' + split + '.csv')
+    elif ratio == '10-90':
         pos_df.to_csv(big_earth_models_folder + 'splits/positive_10_90_vy_' + split + '.csv')
         neg_df.to_csv(big_earth_models_folder + 'splits/negative_10_90_vy_' + split + '.csv')
-    else:
-        pos_df.to_csv(big_earth_models_folder + 'splits/positive_vy_'+split+'.csv')
-        neg_df.to_csv(big_earth_models_folder + 'splits/negative_vy_'+split+'.csv')
+    else: #'64', '128', '256', '512', '1024'
+        pos_df.to_csv(big_earth_models_folder + 'splits/positive_'+ratio+'_vy_'+ split + '.csv')
+        neg_df.to_csv(big_earth_models_folder + 'splits/negative_'+ratio+'_vy_'+ split + '.csv')
 
     # # Create Data sets for finetuning. Make total dataset size divisible by 32 or 64 for easy batching
 
@@ -378,38 +383,30 @@ def preprocess_tfrecords_labelled(split, ten_ninety = False):
     print(len(subset_neg_vy_df_3p))
 
     neg_vy_df = None
-    if ten_ninety:
-        # Assume current positive as 10%, take 90% negative
-        neg_vy_df = neg_df.sample(n=len(pos_df) * 9)
-    else:
+    if ratio == '50-50':
         sample_frac_vy = len(pos_df) / len(neg_df)
         neg_vy_df = neg_df.sample(frac=sample_frac_vy)
-
-    len(neg_vy_df) * 2
-
-    # start_index = 0
-    # stop_index = 0
-    # # for i in range(5):
-    # #     print(f'Start Index: {start_index}')
-    # #     stop_index = len(subset_neg_df)*(i+1)//5
-    # #     print(f'Stop Index: {stop_index}')
-    # #     balanced_df = pd.concat([pos_df, subset_neg_df[start_index:stop_index]])
-    # #     start_index = stop_index
-    # #     # Shuffle the examples
-    # #     balanced_df = balanced_df.sample(frac=1)
-    # #     balanced_df.to_csv(f'./bigearthnet-models/splits/balanced_val{i}.csv')
+    elif ratio == '10-90':
+        # Assume current positive as 10%, take 90% negative
+        neg_vy_df = neg_df.sample(n=len(pos_df) * 9)
+    else: #'64', '128', '256', '512', '1024'
+        pos_df = pos_df.sample(n=int(ratio))
+        neg_vy_df = neg_df.sample(n=len(pos_df))
 
 
     balanced_df = pd.concat([pos_df, neg_vy_df])
     # Shuffle the examples
     balanced_df = balanced_df.sample(frac=1)
 
-    if ten_ninety:
-        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
-        splits = glob(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
-    else:
+    if ratio == '50-50':
         balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
         splits = glob(f'{big_earth_models_folder}splits/balanced_vy_{split}.csv')
+    elif ratio == '10-90':
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_vy_10_90_{split}.csv')
+    else: #'64', '128', '256', '512', '1024'
+        balanced_df.to_csv(f'{big_earth_models_folder}splits/balanced_vy_{ratio}_{split}.csv')
+        splits = glob(f'{big_earth_models_folder}splits/balanced_vy_{ratio}_{split}.csv')
 
     patch_names_list = []
     split_names = []
@@ -439,8 +436,8 @@ if __name__ == "__main__":
                         help="whether to create tfrecords with labelled")
     parser.add_argument('-s', '--split', default='train', type=str,
                         help="which dataset split to create (train,val,test)")
-    parser.add_argument('-tn', '--tenninety', default=True, type=bool,
-                        help="whether to create tfrecords with 10/90 split")
+    parser.add_argument('-sr', '--ratio', default='50-50', choices=['50-50', '10-90', '64', '128', '256', '512', '1024'],
+                        help='Split ratio')
 
     # Shard the data
     parser.add_argument('-sd', '--sharddata', default=False, type=bool,
@@ -466,7 +463,7 @@ if __name__ == "__main__":
 
     if args.tfrecordslabeled:
         print('preprocess_tfrecords_labelled---START')
-        preprocess_tfrecords_labelled(args.split, args.tenninety)
+        preprocess_tfrecords_labelled(args.split, args.ratio)
         print('preprocess_tfrecords_labelled---END')
 
     if args.sharddata:
