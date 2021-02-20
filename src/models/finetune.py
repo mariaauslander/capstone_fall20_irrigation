@@ -33,12 +33,12 @@ METRICS = [
           tf.keras.metrics.AUC(name='auc'),
       ] 
 
-def get_training_dataset(training_filenames, batch_size):
-  return get_batched_dataset(training_filenames, batch_size, shuffle=True)
+def get_training_dataset(training_filenames, batch_size, multiclass):
+  return get_batched_dataset(training_filenames, batch_size, shuffle=True, multiclass=multiclass)
 
 
-def get_validation_dataset(validation_filenames, batch_size):
-  return get_batched_dataset(validation_filenames, batch_size, shuffle=False)
+def get_validation_dataset(validation_filenames, batch_size, multiclass):
+  return get_batched_dataset(validation_filenames, batch_size, shuffle=False, multiclass=multiclass)
 
 
 def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):

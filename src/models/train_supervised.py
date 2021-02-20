@@ -28,12 +28,12 @@ OUTPUT_PATH = os.path.join(BASE_PATH, 'models/supervised')
 TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
 
 
-def get_training_dataset(training_filenames, batch_size):
-    return get_batched_dataset(training_filenames, batch_size, shuffle=True)
+def get_training_dataset(training_filenames, batch_size, multiclass):
+    return get_batched_dataset(training_filenames, batch_size, shuffle=True, multiclass=multiclass)
 
 
-def get_validation_dataset(validation_filenames, batch_size):
-    return get_batched_dataset(validation_filenames, batch_size, shuffle=False)
+def get_validation_dataset(validation_filenames, batch_size, multiclass):
+    return get_batched_dataset(validation_filenames, batch_size, shuffle=False, multiclass=multiclass)
 
 
 METRICS = [
@@ -49,10 +49,9 @@ METRICS = [
     tfa.metrics.FBetaScore(name='tfa_f05', num_classes=1, beta=0.5),
     tfa.metrics.FBetaScore(name='tfa_f2', num_classes=1, beta=2.0),
     tfa.metrics.FBetaScore(name='tfa_f6', num_classes=1, beta=6.0)
-
 ]
 
-def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None):
+def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None, multiclass=False):
     if output_bias is not None:
         output_bias = tf.keras.initializers.Constant(output_bias)
     if use_pretrain:
@@ -80,9 +79,14 @@ def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS
     # define new model
     model = tf.keras.models.Model(inputs=model.inputs, outputs=output)
 
-    model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
-                  optimizer='adam',
-                  metrics=metrics)
+    if multiclass:
+        model.compile(loss=tf.keras.losses.CategoricalCrossentropy(),
+                      optimizer='adam',
+                      metrics=metrics)
+    else:
+        model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
+                      optimizer='adam',
+                      metrics=metrics)
     #   print(f'Trainable variables: {model.trainable_weights}')
 
     return model
@@ -143,7 +147,8 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50", activation="sigmoid"):
+def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False,
+              percent=10, evaluate=False, downsample="50/50", activation="sigmoid", classes="binary"):
 
     # "50/50, 10/90, no"
     test_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_TEST_FILENAMES)
@@ -213,25 +218,40 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         class_weight = None
         print("Not Using Weights")
 
-    training_data = get_training_dataset(training_filenames, batch_size=batch_size)
-    val_data = get_validation_dataset(validation_filenames, batch_size=batch_size)
+    if classes == "binary":
+        multiclass = False
+    else:
+        multiclass = True
+
+    print("multiclass", multiclass)
+    training_data = get_training_dataset(training_filenames, batch_size=batch_size, multiclass=multiclass)
+    val_data = get_validation_dataset(validation_filenames, batch_size=batch_size, multiclass=multiclass)
 
     steps_per_epoch = train_size // batch_size
     validation_steps = val_size // batch_size
 
     # Use an early stopping callback and our timing callback
-    early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor='val_auc',
-        verbose=1,
-        patience=15,
-        mode='max',
-        restore_best_weights=True)
+    if multiclass:
+        early_stop = tf.keras.callbacks.EarlyStopping(
+            monitor='val_auc',
+            verbose=1,
+            patience=15,
+            mode='max',
+            restore_best_weights=True)
+    else:
+        early_stop = tf.keras.callbacks.EarlyStopping(
+            monitor='val_precision',
+            verbose=1,
+            patience=15,
+            mode='max',
+            restore_best_weights=True)
 
     time_callback = TimeHistory()
 
     model = build_model(imported_model=architecture,
                         use_pretrain=pretrain,
-                        output_activation=activation
+                        output_activation=activation,
+                        multiclass=multiclass
                         )
 
     if augment:
@@ -342,7 +362,8 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
-
+    parser.add_argument('-m', '--classes', default="binary", type=str,
+                        help="binary, multi-class")
     parser.add_argument('-o', '--output_activation', default='sigmoid', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
                         help='output layer of activation func to use for classification')
 
@@ -351,7 +372,11 @@ if __name__ == '__main__':
     # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection", entity="cal-capstone")
+    if args.classes == "binary":
+        wandb.init(project="irrigation_detection", entity="cal-capstone")
+    else:
+        wandb.init(project="bigearthnet_classification", entity="cal-capstone")
+
     # wandb.config.epochs = epochs
     # wandb.config.batch_size = batch_size
     # wandb.config.architecture = architecture
@@ -378,7 +403,8 @@ if __name__ == '__main__':
               percent=args.percent,
               evaluate=args.test,
               downsample=args.downsample,
-              activation=args.output_activation
+              activation=args.output_activation,
+              classes=args.classes
               )
 
 
