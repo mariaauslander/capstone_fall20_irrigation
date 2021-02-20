@@ -15,6 +15,10 @@ from wandb.keras import WandbCallback
 from utils import *
 import constants
 
+
+import tensorflow_addons as tfa
+
+
 print(f'Using TensorFlow Version: {tf.__version__}')
 # sns.set()
 
@@ -41,9 +45,14 @@ METRICS = [
     tf.keras.metrics.Precision(name='precision'),
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.AUC(name='auc'),
+    tfa.metrics.F1Score(name='tfa_f1', num_classes=1),
+    tfa.metrics.FBetaScore(name='tfa_f05', num_classes=1, beta=0.5),
+    tfa.metrics.FBetaScore(name='tfa_f2', num_classes=1, beta=2.0),
+    tfa.metrics.FBetaScore(name='tfa_f6', num_classes=1, beta=6.0)
+
 ]
 
-def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None):
+def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None):
     if output_bias is not None:
         output_bias = tf.keras.initializers.Constant(output_bias)
     if use_pretrain:
@@ -62,8 +71,12 @@ def build_model(imported_model, use_pretrain, metrics=METRICS, output_bias=None)
     h2 = tf.keras.layers.Dense(512, activation='elu')(h1)
     h2 = tf.keras.layers.Dropout(0.25)(h2)
     clf = tf.keras.layers.Dense(256, activation='elu')(h2)
-    output = tf.keras.layers.Dense(1, activation='sigmoid',
-                                   bias_initializer=output_bias)(clf)
+    # output = tf.keras.layers.Dense(1, activation=output_activation,
+    #                                bias_initializer=output_bias)(clf)
+
+    output = tf.keras.layers.Dense(1, activation=output_activation, bias_initializer=output_bias)(clf)
+
+
     # define new model
     model = tf.keras.models.Model(inputs=model.inputs, outputs=output)
 
@@ -130,7 +143,7 @@ def _random_apply(func, x, p):
         lambda: x)
 
 
-def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50"):
+def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrain=False, augment=False, percent=10, evaluate=False, downsample="50/50", activation="sigmoid"):
 
     # "50/50, 10/90, no"
     test_filenames = os.path.join(TFR_PATH, "original", constants.IMBALANCED_TEST_FILENAMES)
@@ -175,6 +188,7 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
 
     architecture = arch_dict[arch]
 
+
     if upweight:
 
         # approximation
@@ -216,7 +230,9 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
     time_callback = TimeHistory()
 
     model = build_model(imported_model=architecture,
-                        use_pretrain=pretrain)
+                        use_pretrain=pretrain,
+                        output_activation=activation
+                        )
 
     if augment:
         # [todo] not working
@@ -280,6 +296,11 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         wandb.run.summary["test_precision"] = perf[6]
         wandb.run.summary["test_recall"] = perf[7]
         wandb.run.summary["test_auc"] = perf[8]
+        wandb.run.summary["test_tfa_f1"] = perf[9]
+        wandb.run.summary["test_tfa_f05"] = perf[10]
+        wandb.run.summary["test_tfa_f2"] = perf[11]
+        wandb.run.summary["test_tfa_f6"] = perf[12]
+
         if (perf[6] + perf[7]) == 0:
             wandb.run.summary["test_f1"] = 0
         else:
@@ -321,13 +342,16 @@ if __name__ == '__main__':
     #                     help="use imagenet pretrained model")
     parser.add_argument('-d', '--downsample', default="50/50", type=str,
                         help="50/50, 10/90, no")
+
+    parser.add_argument('-o', '--output_activation', default='sigmoid', choices=['sigmoid', 'softmax', 'relu', 'tanh'],
+                        help='output layer of activation func to use for classification')
+
     args = parser.parse_args()
 
     # Start a W&B run
     # name = f"BE supervised {architecture} b{batch_size} e{epochs}"
     # wandb.init(project="irrigation_detection", name=name)
-    wandb.init(project="irrigation_detection", entity="cal-capstone" )
-
+    wandb.init(project="irrigation_detection", entity="cal-capstone")
     # wandb.config.epochs = epochs
     # wandb.config.batch_size = batch_size
     # wandb.config.architecture = architecture
@@ -343,6 +367,8 @@ if __name__ == '__main__':
     wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
     print("upweights:", args.upweight)
+    print("output_activation", args.output_activation)
+
     run_model(batch_size=args.batch_size,
               epochs=args.epochs,
               upweight=args.upweight,
@@ -351,5 +377,8 @@ if __name__ == '__main__':
               augment=False,
               percent=args.percent,
               evaluate=args.test,
-              downsample=args.downsample)
+              downsample=args.downsample,
+              activation=args.output_activation
+              )
+
 
