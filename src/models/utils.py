@@ -207,7 +207,7 @@ def read_ca_tfrecord(example):
     
     return img, 0
 
-def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False, multiclass=False):
+def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False, num_classes=1):
     '''
     This function is used to return a batch generator for training our tensorflow model.
     basically we read from different tfrecords files, and shuffle our records.
@@ -236,10 +236,11 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
     if ca:
       dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     else:
-        if multiclass:
+        if num_classes > 1:
             dataset = dataset.map(read_tfrecord_multi_classes, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         else:
             dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
 
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)  #
