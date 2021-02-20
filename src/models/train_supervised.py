@@ -155,6 +155,8 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
         validation_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_VALIDATION_FILENAMES)
         # test_filenames = os.path.join(TFR_PATH, "10-90/irrigation", constants.DOWNSAMPLED_TEST_FILENAMES)
     else:
+        print("upweight is disabled")
+        upweight = False
         # using imbalanced dataset
         train_size = (constants.IMBALANCED_TRAIN_SIZE // 100) * percent
         val_size = (constants.IMBALANCED_VAL__SIZE // 100) * percent
