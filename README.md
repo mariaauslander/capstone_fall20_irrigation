@@ -79,7 +79,7 @@ Figure: F-1 score performance on test set varying the number of training set. Re
 2. Train the model using the following command. 
 	```
 	pip install --upgrade wandb
-	wandb login e96802b17d8e833421348df053b41a538a810177
+	wandb login <your wandb apikey>
 	python train_supervised.py -a ARCH -e EPOCHS -b BATCH -p PERCENT -d DOWNSAMPLE -t TEST -c CLASSES
 	``` 
 	- *ARCH* is `InceptionV3`, `ResNet50`, `Xception`, or `ResNet101V2`
