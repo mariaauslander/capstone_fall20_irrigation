@@ -70,7 +70,9 @@ Figure: AUC and F-1 score performance on test set varying the number of training
 | 3% | 0.6664 (0.7113/0.6268)| 
 | 5% | 0.6884 (0.767/0.6245) | 
 | 10% | 0.7147 (0.79/0.6525) | 
-| 100% |   | 
+| 100% | 0.7499 (0.7965/0.7085)  | 
+
+Figure: F-1 score performance on test set varying the number of training set. Result is also available [W&B daishboard](https://wandb.ai/cal-capstone/bigearthnet_classification)  
 
 #### To Reproduce 
 1. Follow the [setup](references/setup.md) and [data pipeline](references/ML_pipeline.md) to prepare the docker container and datasets.
