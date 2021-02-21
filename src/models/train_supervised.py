@@ -1,8 +1,5 @@
 import argparse
-# import seaborn as sns
-# from matplotlib.cm import get_cmap
 import cv2
-import json
 import numpy as np
 import os
 import pandas as pd
@@ -10,11 +7,10 @@ import tensorflow as tf
 import wandb
 from tensorflow.keras.applications import ResNet50, ResNet101V2, Xception, InceptionV3
 from tensorflow.keras.preprocessing import image
-from wandb.keras import WandbCallback
 
+from wandb.keras import WandbCallback
 from utils import *
 import constants
-
 
 import tensorflow_addons as tfa
 
@@ -23,14 +19,6 @@ import tensorflow_addons as tfa
 BASE_PATH = '/workspace/app'
 OUTPUT_PATH = os.path.join(BASE_PATH, 'models/supervised')
 TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
-
-
-def get_training_dataset(training_filenames, batch_size, num_classes):
-    return get_batched_dataset(training_filenames, batch_size, shuffle=True, num_classes=num_classes)
-
-
-def get_validation_dataset(validation_filenames, batch_size, num_classes):
-    return get_batched_dataset(validation_filenames, batch_size, shuffle=False, num_classes=num_classes)
 
 
 METRICS = [
@@ -47,6 +35,7 @@ METRICS = [
     # tfa.metrics.FBetaScore(name='tfa_f2', num_classes=43),    # tfa.metrics.FBetaScore(name='tfa_f2', num_classes=1, beta=2.0), beta=2.0),
     # tfa.metrics.FBetaScore(name='tfa_f6', num_classes=1, beta=6.0)
 ]
+
 
 def build_model(imported_model, use_pretrain, output_activation, metrics=METRICS, output_bias=None, num_classes=1):
     if output_bias is not None:
@@ -209,8 +198,8 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
     else:
         class_weight = None
 
-    training_data = get_training_dataset(training_filenames, batch_size=batch_size, num_classes=num_classes)
-    val_data = get_validation_dataset(validation_filenames, batch_size=batch_size, num_classes=num_classes)
+    training_data = get_batched_dataset(training_filenames, batch_size, shuffle=True, num_classes=num_classes)
+    val_data = get_batched_dataset(validation_filenames, batch_size=batch_size, shuffle=False, num_classes=num_classes)
 
     steps_per_epoch = train_size // batch_size
     validation_steps = val_size // batch_size
@@ -283,12 +272,12 @@ def run_model(batch_size=32, epochs=50, upweight=False, arch="ResNet50", pretrai
     # model.save(f'{OUTPUT_PATH}/{name}.h5')
 
     if evaluate:
-        test_data = get_validation_dataset(test_filenames, batch_size=batch_size, num_classes=num_classes)
+        test_data = get_batched_dataset(test_filenames, batch_size=batch_size, shuffle=False, num_classes=num_classes)
         test_steps = test_size // batch_size
 
         # callback on evaluation seems to override validation results (maybe that is good things)
         # perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps, callbacks=[WandbCallback()])
-        perf = model.evaluate(test_data, batch_size = batch_size, steps=test_steps, return_dict=False)
+        perf = model.evaluate(test_data, batch_size=batch_size, steps=test_steps, return_dict=False)
 
         print(perf)
 

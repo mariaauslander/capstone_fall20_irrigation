@@ -1,22 +1,12 @@
 import pandas as pd
 import tensorflow as tf
-from glob import glob
 import os
-from matplotlib import pyplot as plt
-import numpy as np
-from tqdm import tqdm
-import csv
-import json
-import time
 from tensorflow.keras.layers import *
 from utils import *
-import helpers
-import losses
 import argparse
-import cv2
-from pprint import pprint
 
 # Set Paths
+
 BASE_PATH = './BigEarthData'
 OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
 TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
@@ -32,14 +22,6 @@ METRICS = [
           tf.keras.metrics.Recall(name='recall'),
           tf.keras.metrics.AUC(name='auc'),
       ] 
-
-def get_training_dataset(training_filenames, batch_size, num_classes):
-  return get_batched_dataset(training_filenames, batch_size, shuffle=True, num_classes=num_classes)
-
-
-def get_validation_dataset(validation_filenames, batch_size, num_classes):
-  return get_batched_dataset(validation_filenames, batch_size, shuffle=False, num_classes=num_classes)
-
 
 def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
   
@@ -109,8 +91,8 @@ def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLAS
     else:
       validation_filenames = f'{TFR_PATH}/balanced_val.tfrecord'
 
-    training_data = get_training_dataset(training_filenames, batch_size=BATCH_SIZE)   # shuffle
-    val_data = get_validation_dataset(validation_filenames, batch_size=BATCH_SIZE)  # no shuffle
+    training_data = get_batched_dataset(training_filenames, batch_size=BATCH_SIZE, shuffle=True)
+    val_data = get_batched_dataset(validation_filenames, batch_size=BATCH_SIZE, shuffle=False)
 
     len_val_records = 4820 
     if training_dataset == 'final_balanced_train_10percent.tfrecord':
