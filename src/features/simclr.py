@@ -18,17 +18,18 @@ import helpers
 import losses
 import argparse
 import cv2
+import wandb
 
 # print(f'Using TensorFlow Version: {tf.__version__}')
+
+# Create model logs folder
+if not os.path.exists('model_logs'):
+    os.makedirs('model_logs')
 
 # Set Paths
 BASE_PATH = '/workspace/app'
 OUTPUT_PATH = os.path.join(BASE_PATH, 'src/features/model_logs')
 TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
-
-# Create model logs folder
-if not os.path.exists('model_logs'):
-    os.makedirs('model_logs')
 
     
 def get_training_dataset(training_filenames, batch_size, ca_flag):
@@ -75,7 +76,7 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
     return simclr_model
 
 # Enable eager execution
-tf.config.run_functions_eagerly(False)
+tf.config.run_functions_eagerly(True)
 # remove warning from keras models
 tf.get_logger().setLevel('ERROR')
 
@@ -157,7 +158,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     if ca_flag:
         training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
     else:
-        training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
+        training_filenames = f'{TFR_PATH}/train-part-0.tfrecord'
       
     # Get the training files in batches  
     training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
@@ -212,6 +213,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     min_loss = 1e6
     min_loss_epoch = 0
+
     # Loop through epochs and batches
     for epoch in tqdm(range(epochs)):
         step_wise_loss = []
@@ -244,6 +246,10 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
             
             # Save the final model with weights
             simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')
+
+            ###### save model to wandb
+            simclr_2.save(f'{wandb.run.dir}/{name}_{epoch+1}.h5')
+
   
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
@@ -259,10 +265,24 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     df['zoom'] = ZOOM
     df['jitter'] = JITTER
     df['blur'] = BLUR
-  
+
+    #
+    print(df)
+
+    ###### wandb
+    wandb.run.summary["epoch_wise_loss"] = epoch_wise_loss[0]
+    wandb.run.summary["rotation"] = ROTATION
+    wandb.run.summary["shift"] = SHIFT
+    wandb.run.summary["flip"] = FLIP
+    wandb.run.summary["zoom"] = ZOOM
+    wandb.run.summary["jitter"] = JITTER
+    wandb.run.summary["blur"] = BLUR
+
+    #
     df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
     return df
+
 
 if __name__ == '__main__':
     
@@ -282,6 +302,13 @@ if __name__ == '__main__':
                         help="are you running with california data")
     args = parser.parse_args()
 
+    ###### w&b run
+    wandb.init(project="SimCLR_BigEarthNet", entity="cal-capstone")
+    wandb.config.update(args)  # adds all of the arguments as config variables
+    wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
+
+
+    #
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2':ResNet101V2,
                  'Xception':Xception,
@@ -297,5 +324,3 @@ if __name__ == '__main__':
               ca_flag=ca_flag_dict[args.CALIFORNIA]
              )
 
-    
-    
