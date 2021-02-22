@@ -2,8 +2,10 @@ import pandas as pd
 import tensorflow as tf
 import os
 from tensorflow.keras.layers import *
-from utils import *
+from dataset_helper import *
 import argparse
+
+from model_helper import *
 
 # Set Paths
 
@@ -12,41 +14,6 @@ OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
 TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
 
 # Use the following metrics for evaluation
-METRICS = [
-          tf.keras.metrics.TruePositives(name='tp'),
-          tf.keras.metrics.FalsePositives(name='fp'),
-          tf.keras.metrics.TrueNegatives(name='tn'),
-          tf.keras.metrics.FalseNegatives(name='fn'),
-          tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-          tf.keras.metrics.Precision(name='precision'),
-          tf.keras.metrics.Recall(name='recall'),
-          tf.keras.metrics.AUC(name='auc'),
-      ] 
-
-def load_pretrained_model(model, metrics=METRICS, hidden1=256, hidden2=256):
-  
-  pretrained_model = tf.keras.models.load_model(model)
-  pretrained_model.trainable = True  
-
-  h1 = tf.keras.layers.Dense(hidden1, activation='elu', name='dense_ft_1')(pretrained_model.layers[-2].output)
-  h1 = tf.keras.layers.Dropout(0.50)(h1)
-  h2 = tf.keras.layers.Dense(hidden2, activation='elu', name='dense_ft_2')(h1)
-  h2 = tf.keras.layers.Dropout(0.50)(h2)
-  output = tf.keras.layers.Dense(1, activation='sigmoid', name='output')(h2)
-  
-  # define new model
-  new_model = tf.keras.models.Model(inputs=pretrained_model.inputs, outputs=output)
-
-  # Learning rate of 5e-5 used for finetuning based on hyperparameter evaluations
-  ft_optimizer = tf.keras.optimizers.Adam(learning_rate=0.00005)  
-  
-  # Compile model with Cross Entropy loss
-  new_model.compile(loss=tf.keras.losses.BinaryCrossentropy(),
-              optimizer=ft_optimizer,
-              metrics=metrics)
-
-  return new_model
-
 
 def finetune_pretrained_model(model, num_unfrozen, metrics=METRICS):
   '''
@@ -75,8 +42,8 @@ def finetune_pretrained_model(model, num_unfrozen, metrics=METRICS):
               optimizer=ft_optimizer,
               metrics=metrics)
 
-
   return new_model
+
 
 def run_model(name, pretrained_model, BATCH_SIZE, epochs, training_dataset, CLASS, NUM_UNFROZEN):
     print(50 * "*")
