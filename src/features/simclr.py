@@ -158,7 +158,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     if ca_flag:
         training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
     else:
-        training_filenames = f'{TFR_PATH}/train-part-0.tfrecord'
+        training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
       
     # Get the training files in batches  
     training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
