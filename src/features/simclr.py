@@ -1,7 +1,7 @@
+import os
 import pandas as pd
 import tensorflow as tf
 from glob import glob
-import os
 from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -158,7 +158,8 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     if ca_flag:
         training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
     else:
-        training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
+        # training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
+        training_filenames = f'{TFR_PATH}/train-part-0.tfrecord'
       
     # Get the training files in batches  
     training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
@@ -231,11 +232,21 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
                               temperature=temperature,\
                               batch_size=BATCH_SIZE
                              )
-            
             step_wise_loss.append(loss)
+
+            ###### log loss to wandb
+            wandb.log({"InfoNCE": loss})
       
         # Append to list of loss by epoch
         epoch_wise_loss.append(np.mean(step_wise_loss))
+
+        # ###### log plot to wandb
+        # fig, ax = plt.subplots()
+        # ax.plot(step_wise_loss)
+        # ax.set_ylabel("loss")
+        # # Log the plot
+        # wandb.log({"plot": fig})
+        # fig
         
         # Print the loss after every epoch
         print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
