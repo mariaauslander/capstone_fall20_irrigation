@@ -76,6 +76,8 @@ def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
 
 # Enable eager execution
 tf.config.run_functions_eagerly(False)
+# remove warning from keras models
+tf.get_logger().setLevel('ERROR')
 
 @tf.function
 def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
