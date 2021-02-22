@@ -19,85 +19,76 @@ import losses
 import argparse
 import cv2
 
-print(f'Using TensorFlow Version: {tf.__version__}')
+# print(f'Using TensorFlow Version: {tf.__version__}')
 
 # Set Paths
-BASE_PATH = './BigEarthData'
-OUTPUT_PATH = os.path.join(BASE_PATH, 'models')
-TFR_PATH = os.path.join(BASE_PATH, 'tfrecords')
+BASE_PATH = '/workspace/app'
+OUTPUT_PATH = os.path.join(BASE_PATH, 'src/features/model_logs')
+TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
 
-def get_negative_mask(batch_size):
-    # return a mask that removes the similarity score of equal/similar images.
-    # this function ensures that only distinct pair of images get their similarity scores
-    # passed as negative examples
-    negative_mask = np.ones((batch_size, 2 * batch_size), dtype=bool)
-    for i in range(batch_size):
-        negative_mask[i, i] = 0
-        negative_mask[i, i + batch_size] = 0
-    return tf.constant(negative_mask)
+# Create model logs folder
+if not os.path.exists('model_logs'):
+    os.makedirs('model_logs')
 
-
-# def gaussian_filter(v1, v2):
-#     k_size = int(v1.shape[1] * 0.1)  # kernel size is set to be 10% of the image height/width
-#     gaussian_ope = GaussianBlur(kernel_size=k_size, min=0.1, max=2.0)
-#     [v1, ] = tf.py_function(gaussian_ope, [v1], [tf.float32])
-#     [v2, ] = tf.py_function(gaussian_ope, [v2], [tf.float32])
-#     return v1, v2
-
-
-# Function for getting a dataset generator for our training data. 
-# The flags affect which tfrecords files to use and how to normalize each.
+    
 def get_training_dataset(training_filenames, batch_size, ca_flag):
-  return get_batched_dataset(training_filenames, batch_size, simclr=True, ca=ca_flag)
+    """
+    Helper for getting a dataset generator for our training data. 
+    The flags affect which tfrecords files to use - bigearth or ca dataset.
+    """
+    return get_batched_dataset(training_filenames, batch_size, simclr=True, ca=ca_flag)
 
 
 def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
-  '''
-  This function is used to actually create the neural encoder and projection head. The
-  neural encoder is basically on of ResNet50, ResNet101V2, Xception or InceptionV3 (or any other)
-  We train 10 channels of the satellite data. The projection head dimensions should be specified as inputs.
-  
-  imported_model: tensorflow.keras.applications model - ResNet101V2 is typically used
-  hidden_1: integer - dimension of first layer of the projection head
-  hidden_2: integer - dimension of second layer of the projection head
-  hidden_3: integer - output dimension - vector used in the contrastive loss function
-  '''
-  
-  # Load in a Keras Model for our neural encoder and set to trainable
-  base_model = imported_model(include_top=False, weights=None, input_shape=[120,120, 10])
-  base_model.trainable = True
-  
-  # Input dimensions are fixed to big earth net image dimensions.
-  inputs = Input((120,120,10))
-  
-  # Add a Global Average Pooling to flatten the output of the neural encoder
-  h = base_model(inputs, training=True)
-  h = GlobalAveragePooling2D()(h)
-  
-  # Add the projection head layers with Relu activations
-  projection_1 = Dense(hidden_1)(h)
-  projection_1 = Activation("relu")(projection_1)
-  projection_2 = Dense(hidden_2)(projection_1)
-  projection_2 = Activation("relu")(projection_2)
-  projection_3 = Dense(hidden_3)(projection_2)
+    """
+    1. This function is used to create the neural encoder and projection head. 
+    2. The neural encoder arch can be chosen from {ResNet50, ResNet101V2, Xception, InceptionV3}.
+    3. Training 10 channels(BigEarthNet) of the satellite data. The projection head dimensions should be specified as inputs.
 
-  # Define our final model and return from function
-  simclr_model = tf.keras.models.Model(inputs, projection_3)
-  
-  return simclr_model
-          
+    4. imported_model: tensorflow.keras.applications model - encoder arch(eg. ResNet101V2 is typically used).
+    hidden_1: integer - dimension of the first layer, the projection head.
+    hidden_2: integer - dimension of the second layer, the projection head.
+    hidden_3: integer - output dimension - vector used in the contrastive loss function
+    """
+
+    # Load in a Keras Model for our neural encoder and set to trainable
+    base_model = imported_model(include_top=False, weights=None, input_shape=[120, 120, 10])
+    base_model.trainable = True
+
+    # Input dimensions are fixed to BigEarthNet image dimensions.
+    inputs = Input((120, 120, 10))
+
+    # Add a Global Average Pooling layer to flatten the output of the neural encoder
+    h = base_model(inputs, training=True)
+    h = GlobalAveragePooling2D()(h)
+
+    # Add the projection head layers with `relu` activations
+    projection_1 = Dense(hidden_1)(h)
+    projection_1 = Activation('relu')(projection_1)
+    projection_2 = Dense(hidden_2)(projection_1)
+    projection_2 = Activation('relu')(projection_2)
+    projection_3 = Dense(hidden_3)(projection_2)
+
+    # Define the final model - SimCLR
+    simclr_model = tf.keras.models.Model(inputs, projection_3)
+
+    return simclr_model
+
+# Enable eager execution
+tf.config.run_functions_eagerly(False)
+
 @tf.function
 def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
     
-    # Mask to remove positive examples from the batch of negative samples
+    # Mask that remove positive examples from the batch of negative samples
     negative_mask = helpers.get_negative_mask(batch_size)
   
     with tf.GradientTape() as tape:
-        # Get our latent space vectors for our two sets of augmented images.
+        # Get the latent space vectors for our pairs of augmented images
         zis = model(xis)
         zjs = model(xjs)
 
-        # normalize projection feature vectors
+        # Normalize projection feature vectors
         zis = tf.math.l2_normalize(zis, axis=1)
         zjs = tf.math.l2_normalize(zjs, axis=1)
 
@@ -105,15 +96,14 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
         l_pos = losses._dot_simililarity_dim1(zis, zjs)
         l_pos = tf.reshape(l_pos, (batch_size, 1))
         
-        # Divide by your temperature variable or tau
+        # Divide by the temperature variable `tau`
         l_pos /= temperature
         
         # Combine all images to create negative array 
         negatives = tf.concat([zjs, zis], axis=0)
 
         loss = 0
-
-        # Compare every image vector to every other image vector 
+        # Compare each image vector to every other image vector 
         for positives in [zis, zjs]:
             
             l_neg = losses._dot_simililarity_dim2(positives, negatives)
@@ -139,10 +129,11 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
 
     return loss    
 
+
 def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     '''
-    Main execution function used to take input flags and control overall model flow.
+    Main execution function used to take input flags and control the model flow.
     
     name: -string Output name for model file
     BATCH_SIZE: int- batch size to use during training - set to be large
@@ -162,29 +153,33 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     # California data has different files
     if ca_flag:
-      training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
+        training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
     else:
-      training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
+        training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
       
     # Get the training files in batches  
     training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
 
     # Use Cross Entropy Loss
-    criterion = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, 
-                                                          reduction=tf.keras.losses.Reduction.SUM)
-    # Learning Rate Decay with stochastic gradient descent
+    criterion = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,
+                                                              reduction=tf.keras.losses.Reduction.SUM
+                                                             )
+    
+    # Learning Rate Decay with stochastic gradient descent `SGD`
     decay_steps = 1000
     lr_decayed_fn = tf.keras.experimental.CosineDecay(
-        initial_learning_rate=0.1, decay_steps=decay_steps)
+        initial_learning_rate=0.1, 
+        decay_steps=decay_steps
+    )
     optimizer = tf.keras.optimizers.SGD(lr_decayed_fn)
 
-    # Build the model with the following hidden layer sizes
-    simclr_2 = build_simclr_model(architecture,1024, 512, 128)
+    # Build the model with following hidden layer sizes
+    simclr_2 = build_simclr_model(architecture, 1024, 512, 128)
     
-    # Print Summary of model for user
+    # Model summary
     simclr_2.summary()
 
-    # List for tracking losses by epoch
+    # create a list for tracking losses by epoch
     epoch_wise_loss = []
     
     # Track time spent per epoch
@@ -193,7 +188,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     # Augment Class used for color distortion and Gaussian Blur
     augment = Augment()
     
-    # Set Other Augmentation data
+    # Set other data augmentation
     ROTATION = 180
     SHIFT = 0.10
     FLIP = True
@@ -201,44 +196,52 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     JITTER = 0.0
     BLUR = True
     
-    # Use Keras to augment images in batches
+    # Use Keras image preprocessing to augment images in batches
     datagen = image.ImageDataGenerator(
-            rotation_range=ROTATION,
-            width_shift_range=SHIFT,
-            height_shift_range=SHIFT,
-            horizontal_flip=FLIP,
-            vertical_flip=FLIP,
-            zoom_range=ZOOM,
-            preprocessing_function= augment.augfunc)
+        rotation_range=ROTATION,\
+        width_shift_range=SHIFT,\
+        height_shift_range=SHIFT,\
+        horizontal_flip=FLIP,\
+        vertical_flip=FLIP,\
+        zoom_range=ZOOM,\
+        preprocessing_function= augment.augfunc
+    )
+    
     
     min_loss = 1e6
     min_loss_epoch = 0
-    
-    # Manually walk through epochs and batches
+    # Loop through epochs and batches
     for epoch in tqdm(range(epochs)):
-      step_wise_loss = []
-      
-      # Loop over batches, perform augmentation and calculate poss
-      for image_batch in tqdm(training_data):
-        # Use the data generator to augment the data - DO NOT SHUFFLE - images need to stay aligned
-        a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
-        b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
+        step_wise_loss = []
         
-        # Send image arrays, simclr model, etc to our train_step function
-        loss = train_step(a[0][0], b[0][0], simclr_2, optimizer, criterion, temperature=temperature, batch_size=BATCH_SIZE)
-        step_wise_loss.append(loss)
+        # Loop over batches, perform augmentation and calculate poss
+        for image_batch in tqdm(training_data):
+            # Use the data generator to augment the data - DO NOT SHUFFLE - images need to stay aligned
+            a = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
+            b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
+            
+            # Send image arrays, simclr model, etc to our train_step function
+            loss = train_step(a[0][0], b[0][0], simclr_2,\
+                              optimizer,\
+                              criterion,\
+                              temperature=temperature,\
+                              batch_size=BATCH_SIZE
+                             )
+            
+            step_wise_loss.append(loss)
       
-      # Append to list of loss by epoch
-      epoch_wise_loss.append(np.mean(step_wise_loss))
-
-      # Print the loss after every epoch
-      print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
+        # Append to list of loss by epoch
+        epoch_wise_loss.append(np.mean(step_wise_loss))
         
-      # Save weights every five epochs
-      if (epoch > 0) and ((epoch+1) % 5 == 0):
-        print(f'Saving weights for epoch: {epoch+1}')
-        # Save the final model with weights
-        simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')
+        # Print the loss after every epoch
+        print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
+        
+        # Save weights every five epochs
+        if (epoch > 0) and ((epoch+1) % 5 == 0):
+            print(f'Saving weights for epoch: {epoch+1}')
+            
+            # Save the final model with weights
+            simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')
   
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
@@ -281,12 +284,16 @@ if __name__ == '__main__':
                  'ResNet101V2':ResNet101V2,
                  'Xception':Xception,
                  'InceptionV3':InceptionV3}
+    
     ca_flag_dict = {'True':True, 'False':False}
         
-    run_model(args.output,
-                  BATCH_SIZE=args.BATCH_SIZE,
-                  epochs=args.EPOCHS,
-                  architecture=arch_dict[args.arch],
-                  temperature=args.TEMPERATURE,
-                  ca_flag=ca_flag_dict[args.CALIFORNIA])
+    run_model(args.output,\
+              BATCH_SIZE=args.BATCH_SIZE,\
+              epochs=args.EPOCHS,\
+              architecture=arch_dict[args.arch],\
+              temperature=args.TEMPERATURE,\
+              ca_flag=ca_flag_dict[args.CALIFORNIA]
+             )
 
+    
+    
