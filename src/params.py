@@ -27,6 +27,7 @@ DOWNSAMPLED_TEST_FILENAMES = 'balanced_10_90_test-part-*.tfrecord'
 IMBALANCED_TRAINING_FILENAMES = 'train-part-*.tfrecord'
 IMBALANCED_VALIDATION_FILENAMES = 'val-part-*.tfrecord'
 IMBALANCED_TEST_FILENAMES = 'test-part-*.tfrecord'
+IMBALANCED_CA_TRAINING_FILENAMES = 'train_ca_part*.tfrecord'
 
 BASE_PATH = '/workspace/app'
 # OUTPUT_PATH = os.path.join(BASE_PATH, 'models/supervised')

@@ -3,7 +3,7 @@
 pre-training with simclr 
 
 ```
-simclr.py -a ResNet50 -b 128 -e 1 -t 1 -c 0
+simclr.py -a ResNet50 -b 128 -e 1 -t 1 
 
 ```
 

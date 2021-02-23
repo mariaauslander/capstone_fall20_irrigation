@@ -150,11 +150,10 @@ def run_model(BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     # California data has different files
     if ca_flag:
-        training_filenames = f'{params.TFR_PATH}/train_ca_part*.tfrecord'
+        training_filenames = os.path.join(params.TFR_PATH, "original", params.IMBALANCED_CA_TRAINING_FILENAMES)
     else:
-        # training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
-        training_filenames = f'{params.TFR_PATH}/train-part-0.tfrecord'
-      
+        training_filenames = os.path.join(params.TFR_PATH, "original", params.IMBALANCED_TRAINING_FILENAMES)
+
     # Get the training files in batches
 
     training_data = get_batched_dataset(training_filenames, batch_size=128, shuffle=False,
@@ -316,8 +315,8 @@ if __name__ == '__main__':
                         help="number of epochs to run")
     parser.add_argument('-t', '--temperature', default=0.1, type=float,
                         help="temperature to use during contrastive loss calculation")
-    parser.add_argument('-c', '--california', default=False, type=str2bool,
-                        help="are you running with california data")
+    # parser.add_argument('-c', '--california', default=False, type=str2bool,
+    #                     help="are you running with california data")
     args = parser.parse_args()
 
     ###### w&b run
@@ -336,6 +335,6 @@ if __name__ == '__main__':
               epochs=args.epochs,\
               architecture=arch_dict[args.architecture],\
               temperature=args.temperature,\
-              ca_flag=args.california
+              ca_flag=False
              )
 
