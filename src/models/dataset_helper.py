@@ -10,7 +10,10 @@ datafile_image_patches = {}
 def read_tfrecord_extra_info(example):
     return read_tfrecord(example, return_extra_info=True)
 
-def read_tfrecord(example, return_extra_info=False):
+def read_tfrecord_multi_classes(example):
+    return read_tfrecord(example, multi=True)
+
+def read_tfrecord(example, return_extra_info=False, multi=False):
     '''
     THIS FUNCTION IS USED TO PARSE THE TFRECORDS FILES FOR BIGEARTHNET DATA.
     THE BAND STATISTICS WERE PROVIDED BY THE BIGEARTHNET TEAM
@@ -117,11 +120,14 @@ def read_tfrecord(example, return_extra_info=False):
     multi_hot_label = reshaped_example['original_labels_multi_hot']
     binary_label = reshaped_example['binary_labels']
 
-    # Can update this to return the multilabel if doing multi-class classification
-    if return_extra_info:
-        return img, binary_label, reshaped_example['patch_name']
+    # Can update this to return the multi-label if doing multi-class classification
+    if multi:
+        return img, multi_hot_label
     else:
-        return img, binary_label
+        if return_extra_info:
+            return img, binary_label, reshaped_example['patch_name']
+        else:
+            return img, binary_label
 
 def read_ca_tfrecord(example):
     '''
@@ -201,7 +207,7 @@ def read_ca_tfrecord(example):
     
     return img, 0
 
-def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False):
+def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=False, shuffle=False, num_classes=1):
     '''
     This function is used to return a batch generator for training our tensorflow model.
     basically we read from different tfrecords files, and shuffle our records.
@@ -230,20 +236,24 @@ def get_batched_dataset(filenames, batch_size, augment=False, simclr=False, ca=F
     if ca:
       dataset = dataset.map(read_ca_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     else:
-      dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        if num_classes > 1:
+            dataset = dataset.map(read_tfrecord_multi_classes, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        else:
+            dataset = dataset.map(read_tfrecord, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
 
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)  #
 
     # The above dataset doesn't have the real data loaded when the map function is called.
     # Using take function on 2 examples to minimize the performance issues and side effects
-    global datafile_image_patches
-    image_patches = []
-    dataset_examples = dataset_for_patches.map(read_tfrecord_extra_info,
-                                               num_parallel_calls=tf.data.experimental.AUTOTUNE).take(2)
-    for img, label, patch in dataset_examples:
-        image_patches.append(str(patch.values.numpy())[3:-2])
-    datafile_image_patches[filenames] = image_patches
+    # global datafile_image_patches
+    # image_patches = []
+    # dataset_examples = dataset_for_patches.map(read_tfrecord_extra_info,
+    #                                            num_parallel_calls=tf.data.experimental.AUTOTUNE).take(2)
+    # for img, label, patch in dataset_examples:
+    #     image_patches.append(str(patch.values.numpy())[3:-2])
+    # datafile_image_patches[filenames] = image_patches
     #print(datafile_image_patches)
     return dataset
 

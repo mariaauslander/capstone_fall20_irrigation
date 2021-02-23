@@ -28,13 +28,12 @@ The results above show that we benefit from pretraining on the California data a
 ![tSNE California](reports/images/static_2048_tsne.png)
 
 ## Supervised Baseline Training - BigEarthNet Data
-[TODO] Need to rewrite 
 
-[amended draft]
+#### Irriation Detection (binary classification)
 The BigEarthNet data was first used to establish a supervised baseline to demonstrate the effectiveness of using deep learning for irrigation detection. Further this supervised baseline was then used as a point of reference to compare different self-supervised training methodologies (e.g., augmentation techniques, neural backbone architecture, finetune strategies, etc.). The supervised baseline was established through evaluations of several neural model architectures (InceptionV3, ResNet50, Xception, ResNet101V2), hyperparameter evaluations and techniques to accommodate the class imbalance in the BigEarthNet data set, as previously mentioned.
 The final supervised benchmark model consisted of all negative training examples downsampled at a rate of 19 or ??. The AUC was determined to be approximately 0.97 for both balanced test dataset (50/50 split of positive and negative examples) and skewed test dataset (10/90 split of positive and negative examples). In addition to establishing a baseline using the downsampled dataset, an evaluation was performed to show how supervised model performance drops with a reduction in labeled data. These results are shown in Figures \ref{fig:sup_auc} and \ref{fig:sup_f1} in terms of the receiver operating characteristic curves and F1-scores, respectively.
 
-#### Optimization Hyperparameters 
+**Optimization Hyperparameters**
 - fixed: batch size 32/64
 - hyperparameters 
 	- architecture: InceptionV3, ResNet50, Xception, ResNet101V2
@@ -42,8 +41,9 @@ The final supervised benchmark model consisted of all negative training examples
 	- training set: 1% 3% 5% 10%, 100%
 	- downsampling: 50/50, 10/90
 	- upweighting: enable, disable
+	- output activation: sigmoid, ReLu, tanh, softmax
 
-**AUC (F1-score) **
+**Binary Classification AUC (F1-score)**
 
 |  | 50/50 | 10/90 | no downsample | 
 | ----- | ----- | ----- | -------- | 
@@ -53,25 +53,47 @@ The final supervised benchmark model consisted of all negative training examples
 | 10% | 0.9448 (0.2515) | 0.9323 (0.255) | 0.9132 (0) | 
 | 100% | 0.9648 (0.3148) | 0.973 (0.5296) | 0.9731 (0.478) | 
 
-Figure: AUC and F-1 score performance on test set varying the number of training set (positive samples) and downsamping factors. 
+Figure: AUC and F-1 score performance on test set varying the number of training set (positive samples) and downsamping factors. Result is also available [W&B daishboard](https://wandb.ai/taeil/irrigation_detection)  
+
+#### Multi-Class Classification
+
+**Optimization Hyperparameters** 
+- fixed: no downsampling, sigmoid as output activation, sgd for optimizer, categorical crossentropy as loss function  
+- hyperparameters
+	- architecture: InceptionV3, ResNet50, Xception, ResNet101V2
+
+**Multi-class Classification F1-score (P / R)**
+
+|   | no downsample | 
+| ----- | -------- | 
+| 1% | 0.6447 (0.6888/0.606) | 
+| 3% | 0.6664 (0.7113/0.6268)| 
+| 5% | 0.6884 (0.767/0.6245) | 
+| 10% | 0.7147 (0.79/0.6525) | 
+| 100% | 0.7499 (0.7965/0.7085)  | 
+
+Figure: F-1 score performance on test set varying the number of training set. Result is also available [W&B daishboard](https://wandb.ai/cal-capstone/bigearthnet_classification)  
 
 #### To Reproduce 
 1. Follow the [setup](references/setup.md) and [data pipeline](references/ML_pipeline.md) to prepare the docker container and datasets.
 2. Train the model using the following command. 
 	```
 	pip install --upgrade wandb
-	wandb login e96802b17d8e833421348df053b41a538a810177
-	python train_supervised.py -a ARCH -e EPOCHS -b BATCH -p PERCENT -d DOWNSAMPLE -t TEST
+	wandb login <your wandb apikey>
+	python train_supervised.py -a ARCH -e EPOCHS -b BATCH -p PERCENT -d DOWNSAMPLE -t TEST -c CLASSES
 	``` 
-	- ARCH is 'InceptionV3', 'ResNet50', 'Xception', or 'ResNet101V2'
-	- EPOCHS is number of epochs to run (50 is default)
-	- BATCH is batch size (default is 32). 
-	- AUGMENT is true or false (whether to use data augmentation). (augment is not supported as of now) 
-	- PERCENT is the portion of dataset to be used for training and validation
-	- TEST is true or false (whether to run evaluation on the test set with the trained model at the end)
-	- DOWNSAMPLE is to pick datasets which has been downsampled. `50/50`, `10/90`, or `no`. 
-	- For example, ```python train_supervised.py -a InceptionV3 -e 50 -b 32 -g False -p 1```  
-1. Confirm the results on [W&B dashboard](https://wandb.ai/taeil/irrigation_detection) 
+	- *ARCH* is `InceptionV3`, `ResNet50`, `Xception`, or `ResNet101V2`
+	- *EPOCHS* is number of epochs to run (50 is default)
+	- *BATCH* is batch size (default is `32`). 
+	- *AUGMENT* is `true` or `false` (whether to use data augmentation). (augment is not supported as of now) 
+	- *PERCENT* is the portion of dataset to be used for training and validation
+	- *TEST* is `true` or `false` (whether to run evaluation on the test set with the trained model at the end)
+	- *DOWNSAMPLE* is to pick datasets which has been downsampled. `50/50`, `10/90`, or `no`. 
+	- *CLASSES*: `1` (binary classification for irrigation land) or `43` (multi-class calssficiation)  
+	- For example, the following command will train a model with 50 epochs, 32 batch size, no augmentation, 10% of 50/50 downsampled set with test evaluation on binary classification. 
+		```
+		python train_supervised.py -a InceptionV3 -e 50 -b 32 -g 0 -p 10 -d 50/50 -t 1 -c 1
+		```  
 
 ## Notes on Data Augmentation
 Data augmentation is tested on our supervised model to ensure that:
