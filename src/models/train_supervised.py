@@ -9,11 +9,14 @@ from tensorflow.keras.applications import ResNet50, ResNet101V2, Xception, Incep
 from tensorflow.keras.preprocessing import image
 
 from wandb.keras import WandbCallback
-from dataset_helper import *
+
+import sys
+
+# import local helpers
+sys.path.append('/workspace/app/src')
+
+from data.dataset_helper import *
 import params
-
-import tensorflow_addons as tfa
-
 
 # sns.set()
 # Set Paths

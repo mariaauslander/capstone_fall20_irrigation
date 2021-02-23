@@ -13,31 +13,25 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.layers import *
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 #from augmentation.gaussian_filter import GaussianBlur
-from utils import *
+# from utils import *
 import helpers
 import losses
 import argparse
 import cv2
 import wandb
 
+import sys
+# import local helpers
+sys.path.append('/workspace/app/src')
+
+from data.dataset_helper import *
+import params
+
 # print(f'Using TensorFlow Version: {tf.__version__}')
 
 # Create model logs folder
 if not os.path.exists('model_logs'):
     os.makedirs('model_logs')
-
-# Set Paths
-BASE_PATH = '/workspace/app'
-OUTPUT_PATH = os.path.join(BASE_PATH, 'src/features/model_logs')
-TFR_PATH = os.path.join(BASE_PATH, 'data/processed')
-
-    
-def get_training_dataset(training_filenames, batch_size, ca_flag):
-    """
-    Helper for getting a dataset generator for our training data. 
-    The flags affect which tfrecords files to use - bigearth or ca dataset.
-    """
-    return get_batched_dataset(training_filenames, batch_size, simclr=True, ca=ca_flag)
 
 
 def build_simclr_model(imported_model, hidden_1, hidden_2, hidden_3):
@@ -133,7 +127,7 @@ def train_step(xis, xjs, model, optimizer, criterion, temperature, batch_size):
     return loss    
 
 
-def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
+def run_model(BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     '''
     Main execution function used to take input flags and control the model flow.
@@ -147,22 +141,24 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     '''
     
     # Log information
-    print(50 * "*")
-    print(f"Running model: SimCLR {name}")
-    print(50 * "=")
-    print(f"Batch Size: {BATCH_SIZE}")
-    print(50 * "=")
-    print(f'Using Model Architecture: {architecture}')
+    # print(50 * "*")
+    # print(f"Running model: SimCLR {name}")
+    # print(50 * "=")
+    # print(f"Batch Size: {BATCH_SIZE}")
+    # print(50 * "=")
+    # print(f'Using Model Architecture: {architecture}')
     
     # California data has different files
     if ca_flag:
-        training_filenames = f'{TFR_PATH}/train_ca_part*.tfrecord'
+        training_filenames = f'{params.TFR_PATH}/train_ca_part*.tfrecord'
     else:
         # training_filenames = f'{TFR_PATH}/train-part*.tfrecord'
-        training_filenames = f'{TFR_PATH}/train-part-0.tfrecord'
+        training_filenames = f'{params.TFR_PATH}/train-part-0.tfrecord'
       
-    # Get the training files in batches  
-    training_data = get_training_dataset(training_filenames, BATCH_SIZE, ca_flag=ca_flag)
+    # Get the training files in batches
+
+    training_data = get_batched_dataset(training_filenames, batch_size=128, shuffle=False,
+                                    num_classes=1, simclr=True, ca=ca_flag)
 
     # Use Cross Entropy Loss
     criterion = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,
@@ -193,6 +189,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     augment = Augment()
     
     # Set other data augmentation
+    # [todo change to command parameters]
     ROTATION = 180
     SHIFT = 0.10
     FLIP = True
@@ -210,8 +207,7 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
         zoom_range=ZOOM,\
         preprocessing_function= augment.augfunc
     )
-    
-    
+
     min_loss = 1e6
     min_loss_epoch = 0
 
@@ -252,16 +248,17 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
         print(f"****epoch: {epoch + 1} loss: {epoch_wise_loss[-1]:.3f}****\n")
         
         # Save weights every five epochs
-        if (epoch > 0) and ((epoch+1) % 5 == 0):
-            print(f'Saving weights for epoch: {epoch+1}')
+        # if (epoch > 0) and ((epoch+1) % 5 == 0):
+        #     print(f'Saving weights for epoch: {epoch+1}')
             
             # Save the final model with weights
-            simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')
+            # simclr_2.save(f'{OUTPUT_PATH}/{name}_{epoch+1}.h5')
 
             ###### save model to wandb
-            simclr_2.save(f'{wandb.run.dir}/{name}_{epoch+1}.h5')
+            # simclr_2.save(f'{wandb.run.dir}/{name}_{epoch+1}.h5')
 
-  
+    simclr_2.save(os.path.join(wandb.run.dir, "model.h5"))
+
     # Store the epochwise loss and model metadata to dataframe
     df = pd.DataFrame(epoch_wise_loss)
     df['temperature'] = temperature
@@ -290,26 +287,36 @@ def run_model(name, BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     wandb.run.summary["blur"] = BLUR
 
     #
-    df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
+    # df.to_pickle(f'{OUTPUT_PATH}/{name}.pkl')
     
-    return df
-
+    # return df
+    return
 
 if __name__ == '__main__':
-    
+
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     print('In main function')
     parser = argparse.ArgumentParser(description='Script for running different supervised classifiers')
-    parser.add_argument('-a', '--arch', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
+    parser.add_argument('-a', '--architecture', choices=['ResNet50', 'ResNet101V2', 'Xception', 'InceptionV3'],
                         help='Class of Model Architecture to use for classification')
-    parser.add_argument('-o', '--output', type=str,
-                        help='Output File Prefix for model file and dataframe')
-    parser.add_argument('-b', '--BATCH_SIZE', default=32, type=int,
+    # parser.add_argument('-o', '--output', type=str,
+    #                     help='Output File Prefix for model file and dataframe')
+    parser.add_argument('-b', '--batch_size', default=32, type=int,
                        help="batch size to use during training and validation")
-    parser.add_argument('-e', '--EPOCHS', default=50, type=int,
+    parser.add_argument('-e', '--epochs', default=50, type=int,
                         help="number of epochs to run")
-    parser.add_argument('-t', '--TEMPERATURE', default=0.1, type=float,
+    parser.add_argument('-t', '--temperature', default=0.1, type=float,
                         help="temperature to use during contrastive loss calculation")
-    parser.add_argument('-c', '--CALIFORNIA', default='False', type=str,
+    parser.add_argument('-c', '--california', default=False, type=str2bool,
                         help="are you running with california data")
     args = parser.parse_args()
 
@@ -318,8 +325,6 @@ if __name__ == '__main__':
     wandb.config.update(args)  # adds all of the arguments as config variables
     wandb.config.update({'framework': f'TensorFlow {tf.__version__}'})
 
-
-    #
     arch_dict = {'ResNet50': ResNet50,
                  'ResNet101V2':ResNet101V2,
                  'Xception':Xception,
@@ -327,11 +332,10 @@ if __name__ == '__main__':
     
     ca_flag_dict = {'True':True, 'False':False}
         
-    run_model(args.output,\
-              BATCH_SIZE=args.BATCH_SIZE,\
-              epochs=args.EPOCHS,\
-              architecture=arch_dict[args.arch],\
-              temperature=args.TEMPERATURE,\
-              ca_flag=ca_flag_dict[args.CALIFORNIA]
+    run_model(BATCH_SIZE=args.batch_size,\
+              epochs=args.epochs,\
+              architecture=arch_dict[args.architecture],\
+              temperature=args.temperature,\
+              ca_flag=args.california
              )
 

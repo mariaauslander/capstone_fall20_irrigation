@@ -2,11 +2,13 @@ import argparse
 import tensorflow as tf
 import wandb
 
-from dataset_helper import *
-from model_helper import *
-import params
+import sys
 
-import tensorflow_addons as tfa
+# import local helpers
+sys.path.append('/workspace/app/src')
+
+from data.dataset_helper import *
+import params
 
 def run_model(num_classes, projectid, runid, batch_size=64):
 
@@ -43,7 +45,6 @@ def run_model(num_classes, projectid, runid, batch_size=64):
         wandb.run.summary["test_f1"] = 0
     else:
         wandb.run.summary["test_f1"] = 2 * perf[6] * perf[7] / (perf[6] + perf[7])
-
 
 if __name__ == '__main__':
 
