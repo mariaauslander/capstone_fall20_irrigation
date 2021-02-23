@@ -139,15 +139,7 @@ def run_model(BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     temperature: float - temperature for the softmax
     ca_flag: Boolean - specify whether training on California data or BEN data
     '''
-    
-    # Log information
-    # print(50 * "*")
-    # print(f"Running model: SimCLR {name}")
-    # print(50 * "=")
-    # print(f"Batch Size: {BATCH_SIZE}")
-    # print(50 * "=")
-    # print(f'Using Model Architecture: {architecture}')
-    
+
     # California data has different files
     if ca_flag:
         training_filenames = os.path.join(params.TFR_PATH, "original", params.IMBALANCED_CA_TRAINING_FILENAMES)
@@ -198,12 +190,12 @@ def run_model(BATCH_SIZE, epochs, architecture, temperature, ca_flag):
     
     # Use Keras image preprocessing to augment images in batches
     datagen = image.ImageDataGenerator(
-        rotation_range=ROTATION,\
-        width_shift_range=SHIFT,\
-        height_shift_range=SHIFT,\
-        horizontal_flip=FLIP,\
-        vertical_flip=FLIP,\
-        zoom_range=ZOOM,\
+        rotation_range=ROTATION,
+        width_shift_range=SHIFT,
+        height_shift_range=SHIFT,
+        horizontal_flip=FLIP,
+        vertical_flip=FLIP,
+        zoom_range=ZOOM,
         preprocessing_function= augment.augfunc
     )
 
@@ -221,10 +213,10 @@ def run_model(BATCH_SIZE, epochs, architecture, temperature, ca_flag):
             b = datagen.flow(image_batch, batch_size=BATCH_SIZE, shuffle=False)
             
             # Send image arrays, simclr model, etc to our train_step function
-            loss = train_step(a[0][0], b[0][0], simclr_2,\
-                              optimizer,\
-                              criterion,\
-                              temperature=temperature,\
+            loss = train_step(a[0][0], b[0][0], simclr_2,
+                              optimizer,
+                              criterion,
+                              temperature=temperature,
                               batch_size=BATCH_SIZE
                              )
             step_wise_loss.append(loss)
@@ -331,10 +323,10 @@ if __name__ == '__main__':
     
     ca_flag_dict = {'True':True, 'False':False}
         
-    run_model(BATCH_SIZE=args.batch_size,\
-              epochs=args.epochs,\
-              architecture=arch_dict[args.architecture],\
-              temperature=args.temperature,\
+    run_model(BATCH_SIZE=args.batch_size,
+              epochs=args.epochs,
+              architecture=arch_dict[args.architecture],
+              temperature=args.temperature,
               ca_flag=False
              )
 
